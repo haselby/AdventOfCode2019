@@ -4,6 +4,43 @@
 
 #include <cstdio>
 #include <iostream>
+using namespace std;
+
+
+struct Instruction_decoder {
+    Instruction_decoder(int myInstruction) {
+        instruction = myInstruction;
+        set_opcode();
+        set_num_parameters();
+        set_parameter_mode();
+    };
+    int instruction;
+    int opcode;
+    int num_parameters;
+    bool parameter1_isImmediate;
+    bool parameter2_isImmediate;
+    bool parameter3_isImmediate;
+
+    int getDigit(int n, int position) {
+        return (n % (int)pow(10, position) - (n % (int)pow(10, position - 1))) / (int)pow(10, position - 1);
+    }
+
+    void set_opcode() {
+        opcode = (getDigit(instruction, 2) * 10) + getDigit(instruction, 1);
+    }
+    void set_num_parameters() {
+        if (opcode == 1) num_parameters = 3;
+        else if (opcode == 2) num_parameters = 3;
+        else if (opcode == 3) num_parameters = 1;
+        else if (opcode == 4) num_parameters = 1;
+    }
+
+    void set_parameter_mode() {
+        parameter1_isImmediate = (getDigit(instruction, 3) == 1);
+        parameter2_isImmediate = (getDigit(instruction, 4) == 1);
+        parameter3_isImmediate = (getDigit(instruction, 5) == 1);       
+    }
+};
 
 void setup_trial(int* puzzle, const int* input, const int n_input, int noun, int verb) {
     for (size_t i = 0; i < n_input; i++) {
@@ -24,7 +61,6 @@ void compute(int* array_ptr, size_t array_length, int instruction_pointer) {
     int progOut{};
     
     if (array_ptr[instruction_pointer] == 1) {
-        printf("Op Code 1 Executed\n");
         index_a = array_ptr[instruction_pointer + 1];
         index_b = array_ptr[instruction_pointer + 2];
         index_c = array_ptr[instruction_pointer + 3];
@@ -35,7 +71,6 @@ void compute(int* array_ptr, size_t array_length, int instruction_pointer) {
         compute(array_ptr, array_length, instruction_pointer + 4);
     }
     else if (array_ptr[instruction_pointer] == 2) {
-        printf("Opt Code 2 Executed\n");
         index_a = array_ptr[instruction_pointer + 1];
         index_b = array_ptr[instruction_pointer + 2];
         index_c = array_ptr[instruction_pointer + 3];
@@ -47,24 +82,21 @@ void compute(int* array_ptr, size_t array_length, int instruction_pointer) {
 
     }
     else if (array_ptr[instruction_pointer] == 3) {
-        printf("Opt Code 3 Executed\n");
         index_a = array_ptr[instruction_pointer + 1];
-        std::cout << "Request for Input" << std::endl;
-        std::cin >> progIn;
+        cout << "Request for Input" << endl;
+        cin >> progIn;
         array_ptr[index_a] = progIn;
         compute(array_ptr, array_length, instruction_pointer + 2);
 
     }
     else if (array_ptr[instruction_pointer] == 4) {
-        printf("Opt Code 4 Executed\n");
         index_a = array_ptr[instruction_pointer + 1];
-        std::cout << "Ouput: " << std::endl;
-        std::cout << array_ptr[index_a] << std::endl;
+        cout << "Ouput: " << std::endl;
+        cout << array_ptr[index_a] << std::endl;
         compute(array_ptr, array_length, instruction_pointer + 2);
 
     }
     else if (array_ptr[instruction_pointer] == 99) {
-
         printf("Opt Code 99 Executed\n");
         printf("Result: %d\n", array_ptr[0]);
         return;
@@ -89,4 +121,14 @@ int main()
     const int n_input = (sizeof(puzzleInput) / sizeof(puzzleInput[0]));
   
     compute(puzzleInput, n_input, 0);
+
+    //Test area
+    int myInstr = 10102;
+    Instruction_decoder myTestInstruction(myInstr);
+    cout << "My instruction is: " << myInstr << endl;
+    cout << "My opcode is: " << myTestInstruction.opcode << endl;
+    cout << "My number of parameters is: " << myTestInstruction.num_parameters << endl;
+    cout << "parameters 1 is intermediate: " << myTestInstruction.parameter1_isImmediate << endl;
+    cout << "parameters 2 is intermediate: " << myTestInstruction.parameter2_isImmediate << endl;
+    cout << "parameters 3 is intermediate: " << myTestInstruction.parameter3_isImmediate << endl;
 }
