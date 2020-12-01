@@ -60,6 +60,7 @@ void compute(int* array_ptr, size_t array_length, int instruction_pointer) {
 	int progOut{};
 
 	if (decoder_ptr->opcode == 1) {
+		// add operation
 		index_a = array_ptr[instruction_pointer + 1];
 		index_b = array_ptr[instruction_pointer + 2];
 		index_c = array_ptr[instruction_pointer + 3];
@@ -70,6 +71,7 @@ void compute(int* array_ptr, size_t array_length, int instruction_pointer) {
 		compute(array_ptr, array_length, instruction_pointer + 4);
 	}
 	else if (decoder_ptr->opcode == 2) {
+		// multiple operation
 		index_a = array_ptr[instruction_pointer + 1];
 		index_b = array_ptr[instruction_pointer + 2];
 		index_c = array_ptr[instruction_pointer + 3];
@@ -81,6 +83,7 @@ void compute(int* array_ptr, size_t array_length, int instruction_pointer) {
 
 	}
 	else if (decoder_ptr->opcode == 3) {
+		// request for input operation
 		index_a = array_ptr[instruction_pointer + 1];
 		std::cout << "Request for Input" << std::endl;
 		std::cin >> progIn;
@@ -89,6 +92,7 @@ void compute(int* array_ptr, size_t array_length, int instruction_pointer) {
 
 	}
 	else if (decoder_ptr->opcode == 4) {
+		// output operation
 		index_a = array_ptr[instruction_pointer + 1];
 		std::cout << "Ouput: " << std::endl;
 		std::cout << (decoder_ptr->parameter1_isImmediate ? index_a : array_ptr[index_a]) << std::endl;
@@ -96,7 +100,7 @@ void compute(int* array_ptr, size_t array_length, int instruction_pointer) {
 
 	}
 	else if (decoder_ptr->opcode == 5) {
-		//TODO jump-if-true
+		// jump-if-true operation
 		index_a = array_ptr[instruction_pointer + 1];
 		index_b = array_ptr[instruction_pointer + 2];
 		a = decoder_ptr->parameter1_isImmediate ? index_a : array_ptr[index_a];
@@ -110,7 +114,7 @@ void compute(int* array_ptr, size_t array_length, int instruction_pointer) {
 
 	}
 	else if (decoder_ptr->opcode == 6) {
-		//TODO jump-if-false
+		// jump-if-false operation
 		index_a = array_ptr[instruction_pointer + 1];
 		index_b = array_ptr[instruction_pointer + 2];
 		a = decoder_ptr->parameter1_isImmediate ? index_a : array_ptr[index_a];
@@ -123,7 +127,7 @@ void compute(int* array_ptr, size_t array_length, int instruction_pointer) {
 		}
 	}
 	else if (decoder_ptr->opcode == 7) {
-		//TODO less than
+		// less than operation
 		index_a = array_ptr[instruction_pointer + 1];
 		index_b = array_ptr[instruction_pointer + 2];
 		index_c = array_ptr[instruction_pointer + 3];
@@ -134,7 +138,7 @@ void compute(int* array_ptr, size_t array_length, int instruction_pointer) {
 		compute(array_ptr, array_length, instruction_pointer + 4);
 	}
 	else if (decoder_ptr->opcode == 8) {
-		//TODO equals
+		// equals operation
 		index_a = array_ptr[instruction_pointer + 1];
 		index_b = array_ptr[instruction_pointer + 2];
 		index_c = array_ptr[instruction_pointer + 3];
@@ -146,16 +150,15 @@ void compute(int* array_ptr, size_t array_length, int instruction_pointer) {
 
 	}
 	else if (decoder_ptr->opcode == 99) {
+		// exit operation
 		std::cout << "Opt Code 99 Executed" << std::endl;
 		std::cout << array_ptr[0] << std::endl;
 		return;
 	}
 	else {
+		// invalid opcode handling
 		std::cout << "Intcode computer error, unexpected opcode: " << decoder_ptr->opcode << std::endl;
 		std::terminate;
-		//throw std::runtime_error{ "Unexpected opcode" };
-		//printf("Danger Will Robinson. Abort. Abort\n");
-		//return;
 	}
 
 }
