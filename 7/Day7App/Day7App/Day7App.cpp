@@ -42,7 +42,7 @@ struct IntcodeComputer {
 
 	// TODO - Temporary constructor
 	IntcodeComputer() {};
-	
+
 	void setup_trial(int* puzzle, const int* input, const int n_input, int noun, int verb) {
 		for (size_t i = 0; i < n_input; i++) {
 			puzzle[i] = input[i];
@@ -51,7 +51,7 @@ struct IntcodeComputer {
 		puzzle[2] = verb;
 	}
 
-	void compute(int* array_ptr, size_t array_length, int instruction_pointer) {
+	int compute(int* array_ptr, size_t array_length, int instruction_pointer, int input) {
 
 		InstructionDecoder* decoder_ptr = new InstructionDecoder(array_ptr[instruction_pointer]);
 
@@ -63,6 +63,7 @@ struct IntcodeComputer {
 		int index_c{};
 		int progIn{};
 		int progOut{};
+		int outputCode{};
 
 		if (decoder_ptr->opcode == 1) {
 			// add operation
@@ -73,7 +74,7 @@ struct IntcodeComputer {
 			b = decoder_ptr->parameter2_isImmediate ? index_b : array_ptr[index_b];
 			c = a + b;
 			array_ptr[index_c] = c;
-			compute(array_ptr, array_length, instruction_pointer + 4);
+			compute(array_ptr, array_length, instruction_pointer + 4, input);
 		}
 		else if (decoder_ptr->opcode == 2) {
 			// multiple operation
@@ -84,24 +85,25 @@ struct IntcodeComputer {
 			b = decoder_ptr->parameter2_isImmediate ? index_b : array_ptr[index_b];
 			c = a * b;
 			array_ptr[index_c] = c;
-			compute(array_ptr, array_length, instruction_pointer + 4);
+			compute(array_ptr, array_length, instruction_pointer + 4, input);
 
 		}
 		else if (decoder_ptr->opcode == 3) {
 			// request for input operation
 			index_a = array_ptr[instruction_pointer + 1];
-			std::cout << "Request for Input" << std::endl;
-			std::cin >> progIn;
+			//std::cout << "Request for Input" << std::endl;
+			//std::cin >> progIn;
+			progIn = input;
 			array_ptr[index_a] = progIn;
-			compute(array_ptr, array_length, instruction_pointer + 2);
+			compute(array_ptr, array_length, instruction_pointer + 2, input);
 
 		}
 		else if (decoder_ptr->opcode == 4) {
 			// output operation
 			index_a = array_ptr[instruction_pointer + 1];
-			std::cout << "Ouput: " << std::endl;
-			std::cout << (decoder_ptr->parameter1_isImmediate ? index_a : array_ptr[index_a]) << std::endl;
-			compute(array_ptr, array_length, instruction_pointer + 2);
+			return (decoder_ptr->parameter1_isImmediate ? index_a : array_ptr[index_a]);
+			//No need to continue, since return above
+			//compute(array_ptr, array_length, instruction_pointer + 2, input);
 
 		}
 		else if (decoder_ptr->opcode == 5) {
@@ -111,10 +113,10 @@ struct IntcodeComputer {
 			a = decoder_ptr->parameter1_isImmediate ? index_a : array_ptr[index_a];
 			b = decoder_ptr->parameter2_isImmediate ? index_b : array_ptr[index_b];
 			if (!(a == 0)) {
-				compute(array_ptr, array_length, b);
+				compute(array_ptr, array_length, b, input);
 			}
 			else {
-				compute(array_ptr, array_length, instruction_pointer + 3); // Assuming 2 parameters
+				compute(array_ptr, array_length, instruction_pointer + 3, input); // Assuming 2 parameters
 			}
 
 		}
@@ -125,10 +127,10 @@ struct IntcodeComputer {
 			a = decoder_ptr->parameter1_isImmediate ? index_a : array_ptr[index_a];
 			b = decoder_ptr->parameter2_isImmediate ? index_b : array_ptr[index_b];
 			if (a == 0) {
-				compute(array_ptr, array_length, b);
+				compute(array_ptr, array_length, b, input);
 			}
 			else {
-				compute(array_ptr, array_length, instruction_pointer + 3); // Assuming 2 parameters
+				compute(array_ptr, array_length, instruction_pointer + 3, input); // Assuming 2 parameters
 			}
 		}
 		else if (decoder_ptr->opcode == 7) {
@@ -140,7 +142,7 @@ struct IntcodeComputer {
 			b = decoder_ptr->parameter2_isImmediate ? index_b : array_ptr[index_b];
 			c = (a < b) ? 1 : 0;
 			array_ptr[index_c] = c;
-			compute(array_ptr, array_length, instruction_pointer + 4);
+			compute(array_ptr, array_length, instruction_pointer + 4, input);
 		}
 		else if (decoder_ptr->opcode == 8) {
 			// equals operation
@@ -151,14 +153,15 @@ struct IntcodeComputer {
 			b = decoder_ptr->parameter2_isImmediate ? index_b : array_ptr[index_b];
 			c = (a == b) ? 1 : 0;
 			array_ptr[index_c] = c;
-			compute(array_ptr, array_length, instruction_pointer + 4);
+			compute(array_ptr, array_length, instruction_pointer + 4, input);
 
 		}
 		else if (decoder_ptr->opcode == 99) {
-			// exit operation
+			// exit operation - SHOULD NEVER GET HERE in Day7App - 
 			std::cout << "Opt Code 99 Executed" << std::endl;
 			std::cout << array_ptr[0] << std::endl;
-			return;
+			std::cout << "TEST2: " << outputCode << std::endl;
+			return 42; // Should we ever get here?
 		}
 		else {
 			// invalid opcode handling
@@ -179,5 +182,11 @@ int main()
 
 	const int n_input = (sizeof(puzzleInput) / sizeof(puzzleInput[0]));
 
-	amp_a->compute(puzzleInput, n_input, 0);
+	int input_amp_a = 5;
+
+	std::cout << "Input of amp a: " << input_amp_a << std::endl;
+	
+	int output_amp_a = amp_a->compute(puzzleInput, n_input, 0, input_amp_a);
+
+	std::cout << "Output of amp a: " << output_amp_a << std::endl;
 }
