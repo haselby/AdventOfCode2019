@@ -42,12 +42,17 @@ struct InstructionDecoder {
 struct IntcodeComputer {
 	
 	std::vector<int> intcodeProgram;
+	int phase;
+	int input;
+	int input_no = 1;
 	
-	IntcodeComputer(std::vector<int> &puzzleInput) {
+	IntcodeComputer(std::vector<int> &puzzleInput, int phaseAmp, int inputAmp) {
 		intcodeProgram = puzzleInput;
+		phase = phaseAmp;
+		input = inputAmp;
 	};
 
-	int compute(long long instruction_pointer, int input) {
+	int compute(long long instruction_pointer) {
 
 		InstructionDecoder* decoder_ptr = new InstructionDecoder(intcodeProgram[instruction_pointer]);
 
@@ -70,7 +75,7 @@ struct IntcodeComputer {
 			b = decoder_ptr->parameter2_isImmediate ? index_b : intcodeProgram[index_b];
 			c = a + b;
 			intcodeProgram[index_c] = c;
-			compute(instruction_pointer + 4, input);
+			compute(instruction_pointer + 4);
 		}
 		else if (decoder_ptr->opcode == 2) {
 			// multiple operation
@@ -81,7 +86,7 @@ struct IntcodeComputer {
 			b = decoder_ptr->parameter2_isImmediate ? index_b : intcodeProgram[index_b];
 			c = a * b;
 			intcodeProgram[index_c] = c;
-			compute(instruction_pointer + 4, input);
+			compute(instruction_pointer + 4);
 
 		}
 		else if (decoder_ptr->opcode == 3) {
@@ -89,9 +94,10 @@ struct IntcodeComputer {
 			index_a = intcodeProgram[instruction_pointer + 1];
 			//std::cout << "Request for Input" << std::endl;
 			//std::cin >> progIn;
-			progIn = input;
+			progIn = (input_no == 1) ? phase : input;
+			++input_no;
 			intcodeProgram[index_a] = progIn;
-			compute(instruction_pointer + 2, input);
+			compute(instruction_pointer + 2);
 
 		}
 		else if (decoder_ptr->opcode == 4) {
@@ -99,7 +105,7 @@ struct IntcodeComputer {
 			index_a = intcodeProgram[instruction_pointer + 1];
 			return (decoder_ptr->parameter1_isImmediate ? index_a : intcodeProgram[index_a]);
 			//No need to continue, since return above
-			//compute(instruction_pointer + 2, input);
+			//compute(instruction_pointer + 2);
 
 		}
 		else if (decoder_ptr->opcode == 5) {
@@ -109,10 +115,10 @@ struct IntcodeComputer {
 			a = decoder_ptr->parameter1_isImmediate ? index_a : intcodeProgram[index_a];
 			b = decoder_ptr->parameter2_isImmediate ? index_b : intcodeProgram[index_b];
 			if (!(a == 0)) {
-				compute(b, input);
+				compute(b);
 			}
 			else {
-				compute(instruction_pointer + 3, input); // Assuming 2 parameters
+				compute(instruction_pointer + 3); 
 			}
 
 		}
@@ -123,10 +129,10 @@ struct IntcodeComputer {
 			a = decoder_ptr->parameter1_isImmediate ? index_a : intcodeProgram[index_a];
 			b = decoder_ptr->parameter2_isImmediate ? index_b : intcodeProgram[index_b];
 			if (a == 0) {
-				compute(b, input);
+				compute(b);
 			}
 			else {
-				compute(instruction_pointer + 3, input); // Assuming 2 parameters
+				compute(instruction_pointer + 3); 
 			}
 		}
 		else if (decoder_ptr->opcode == 7) {
@@ -138,7 +144,7 @@ struct IntcodeComputer {
 			b = decoder_ptr->parameter2_isImmediate ? index_b : intcodeProgram[index_b];
 			c = (a < b) ? 1 : 0;
 			intcodeProgram[index_c] = c;
-			compute(instruction_pointer + 4, input);
+			compute(instruction_pointer + 4);
 		}
 		else if (decoder_ptr->opcode == 8) {
 			// equals operation
@@ -149,7 +155,7 @@ struct IntcodeComputer {
 			b = decoder_ptr->parameter2_isImmediate ? index_b : intcodeProgram[index_b];
 			c = (a == b) ? 1 : 0;
 			intcodeProgram[index_c] = c;
-			compute(instruction_pointer + 4, input);
+			compute(instruction_pointer + 4);
 
 		}
 		else if (decoder_ptr->opcode == 99) {
@@ -172,18 +178,55 @@ struct IntcodeComputer {
 int main()
 {
 	
-
-	std::vector<int> puzzleInput = { 3,225,1,225,6,6,1100,1,238,225,104,0,1102,83,20,225,1102,55,83,224,1001,224,-4565,224,4,224,102,8,223,223,101,5,224,224,1,223,224,223,1101,52,15,225,1102,42,92,225,1101,24,65,225,101,33,44,224,101,-125,224,224,4,224,102,8,223,223,1001,224,7,224,1,223,224,223,1001,39,75,224,101,-127,224,224,4,224,1002,223,8,223,1001,224,3,224,1,223,224,223,2,14,48,224,101,-1300,224,224,4,224,1002,223,8,223,1001,224,2,224,1,223,224,223,1002,139,79,224,101,-1896,224,224,4,224,102,8,223,223,1001,224,2,224,1,223,224,223,1102,24,92,225,1101,20,53,224,101,-73,224,224,4,224,102,8,223,223,101,5,224,224,1,223,224,223,1101,70,33,225,1101,56,33,225,1,196,170,224,1001,224,-38,224,4,224,102,8,223,223,101,4,224,224,1,224,223,223,1101,50,5,225,102,91,166,224,1001,224,-3003,224,4,224,102,8,223,223,101,2,224,224,1,224,223,223,4,223,99,0,0,0,677,0,0,0,0,0,0,0,0,0,0,0,1105,0,99999,1105,227,247,1105,1,99999,1005,227,99999,1005,0,256,1105,1,99999,1106,227,99999,1106,0,265,1105,1,99999,1006,0,99999,1006,227,274,1105,1,99999,1105,1,280,1105,1,99999,1,225,225,225,1101,294,0,0,105,1,0,1105,1,99999,1106,0,300,1105,1,99999,1,225,225,225,1101,314,0,0,106,0,0,1105,1,99999,1107,677,677,224,1002,223,2,223,1006,224,329,1001,223,1,223,1107,226,677,224,102,2,223,223,1005,224,344,101,1,223,223,108,677,677,224,1002,223,2,223,1006,224,359,101,1,223,223,107,677,677,224,1002,223,2,223,1006,224,374,1001,223,1,223,1007,677,677,224,102,2,223,223,1006,224,389,101,1,223,223,108,677,226,224,102,2,223,223,1006,224,404,101,1,223,223,1108,226,677,224,102,2,223,223,1005,224,419,1001,223,1,223,7,677,226,224,102,2,223,223,1005,224,434,101,1,223,223,1008,677,677,224,102,2,223,223,1006,224,449,1001,223,1,223,1007,677,226,224,1002,223,2,223,1006,224,464,101,1,223,223,1108,677,677,224,1002,223,2,223,1005,224,479,1001,223,1,223,107,226,226,224,1002,223,2,223,1005,224,494,101,1,223,223,8,226,677,224,102,2,223,223,1006,224,509,101,1,223,223,8,677,677,224,102,2,223,223,1006,224,524,101,1,223,223,1007,226,226,224,1002,223,2,223,1006,224,539,1001,223,1,223,107,677,226,224,102,2,223,223,1006,224,554,101,1,223,223,1107,677,226,224,1002,223,2,223,1006,224,569,1001,223,1,223,1008,226,677,224,102,2,223,223,1006,224,584,1001,223,1,223,1008,226,226,224,1002,223,2,223,1005,224,599,1001,223,1,223,7,677,677,224,1002,223,2,223,1005,224,614,1001,223,1,223,1108,677,226,224,1002,223,2,223,1005,224,629,101,1,223,223,7,226,677,224,1002,223,2,223,1005,224,644,1001,223,1,223,8,677,226,224,102,2,223,223,1005,224,659,101,1,223,223,108,226,226,224,102,2,223,223,1005,224,674,101,1,223,223,4,223,99,226 };
-
-	//std::vector<int> puzzleInput = {3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0};
+	//std::vector<int> puzzleInput = {3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0}; // Passing
+	//std::vector<int> puzzleInput = { 3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0 }; // Passing
+	std::vector<int> puzzleInput = { 3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0 };
 	
-	IntcodeComputer* amp_a = new IntcodeComputer(puzzleInput);
-	
-	int input_amp_a = 5;
+	int phaseAmpA{1};
+	int phaseAmpB{0};
+	int phaseAmpC{4};
+	int phaseAmpD{3};
+	int phaseAmpE{2};
 
-	std::cout << "Input of amp a: " << input_amp_a << std::endl;
+	int inputAmpA{0};
 	
-	int output_amp_a = amp_a->compute(0, input_amp_a);
+	int outputAmpA{};
+	int outputAmpB{};
+	int outputAmpC{};
+	int outputAmpD{};
+	int outputAmpE{};
 
-	std::cout << "Output of amp a: " << output_amp_a << std::endl;
+	std::cout << "Phase of amp a: " << phaseAmpA << std::endl;
+	std::cout << "Phase of amp b: " << phaseAmpB << std::endl;
+	std::cout << "Phase of amp c: " << phaseAmpC << std::endl;
+	std::cout << "Phase of amp d: " << phaseAmpD << std::endl;
+	std::cout << "Phase of amp e: " << phaseAmpE << std::endl;
+
+	
+	std::cout << "Input of amp a: " << inputAmpA << std::endl;
+	
+	//Amp A
+	IntcodeComputer* amp_a = new IntcodeComputer(puzzleInput, phaseAmpA, inputAmpA);
+	outputAmpA = amp_a->compute(0);
+	std::cout << "Output of amp a: " << outputAmpA << std::endl;
+
+	//Amp B
+	IntcodeComputer* amp_b = new IntcodeComputer(puzzleInput, phaseAmpB, outputAmpA);
+	outputAmpB = amp_b->compute(0);
+	std::cout << "Output of amp B: " << outputAmpB << std::endl;
+	
+	//Amp C
+	IntcodeComputer* amp_c = new IntcodeComputer(puzzleInput, phaseAmpC, outputAmpB);
+	outputAmpC = amp_c->compute(0);
+	std::cout << "Output of amp C: " << outputAmpC << std::endl;
+
+	//AMP D
+	IntcodeComputer* amp_d = new IntcodeComputer(puzzleInput, phaseAmpD, outputAmpC);
+	outputAmpD = amp_d->compute(0);
+	std::cout << "Output of amp D: " << outputAmpD << std::endl;
+
+	//AMP E
+	IntcodeComputer* amp_e = new IntcodeComputer(puzzleInput, phaseAmpE, outputAmpD);
+	outputAmpE = amp_e->compute(0);
+	std::cout << "Output of amp E: " << outputAmpE << std::endl;
 }
