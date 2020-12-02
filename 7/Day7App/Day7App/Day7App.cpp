@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <set>
 
 struct InstructionDecoder {
 	InstructionDecoder(int myInstruction) {
@@ -175,21 +176,15 @@ struct IntcodeComputer {
 
 };
 
-int main()
-{
-	
-	//std::vector<int> puzzleInput = {3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0}; // Passing
-	//std::vector<int> puzzleInput = { 3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0 }; // Passing
-	std::vector<int> puzzleInput = { 3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0 };
-	
-	int phaseAmpA{1};
-	int phaseAmpB{0};
-	int phaseAmpC{4};
-	int phaseAmpD{3};
-	int phaseAmpE{2};
+int testThruster(std::vector<int> &puzzleInput, std::vector<int> &orderedPhases) {
+	int phaseAmpA = orderedPhases[0];
+	int phaseAmpB = orderedPhases[1];
+	int phaseAmpC = orderedPhases[2];
+	int phaseAmpD = orderedPhases[3];
+	int phaseAmpE = orderedPhases[4];
 
-	int inputAmpA{0};
-	
+	int inputAmpA{ 0 };
+
 	int outputAmpA{};
 	int outputAmpB{};
 	int outputAmpC{};
@@ -202,9 +197,9 @@ int main()
 	std::cout << "Phase of amp d: " << phaseAmpD << std::endl;
 	std::cout << "Phase of amp e: " << phaseAmpE << std::endl;
 
-	
+
 	std::cout << "Input of amp a: " << inputAmpA << std::endl;
-	
+
 	//Amp A
 	IntcodeComputer* amp_a = new IntcodeComputer(puzzleInput, phaseAmpA, inputAmpA);
 	outputAmpA = amp_a->compute(0);
@@ -214,7 +209,7 @@ int main()
 	IntcodeComputer* amp_b = new IntcodeComputer(puzzleInput, phaseAmpB, outputAmpA);
 	outputAmpB = amp_b->compute(0);
 	std::cout << "Output of amp B: " << outputAmpB << std::endl;
-	
+
 	//Amp C
 	IntcodeComputer* amp_c = new IntcodeComputer(puzzleInput, phaseAmpC, outputAmpB);
 	outputAmpC = amp_c->compute(0);
@@ -229,4 +224,45 @@ int main()
 	IntcodeComputer* amp_e = new IntcodeComputer(puzzleInput, phaseAmpE, outputAmpD);
 	outputAmpE = amp_e->compute(0);
 	std::cout << "Output of amp E: " << outputAmpE << std::endl;
+
+	return outputAmpE;
+}
+
+void everyCombination(std::vector<int>& puzzleInput, std::vector<int> orderedPhases, std::set<int> availablePhases, int &maxThrust) {
+
+	std::vector<int> downstreamOrderedPhases;
+	std::set<int> downstreamAvailablePhases;
+	int currentThrust{};
+
+	if (availablePhases.size() == 0) {
+		currentThrust = testThruster(puzzleInput, orderedPhases);
+		if (currentThrust > maxThrust) maxThrust = currentThrust;
+		return;
+	}
+	else {
+		for (auto phase : availablePhases) {
+			//Next two lines: Resets for every loop iteration    
+			downstreamOrderedPhases = orderedPhases;
+			downstreamAvailablePhases = availablePhases;
+			downstreamOrderedPhases.push_back(phase);
+			downstreamAvailablePhases.erase(phase);
+			everyCombination(puzzleInput, downstreamOrderedPhases, downstreamAvailablePhases, maxThrust);
+		}
+		return;
+	}
+}
+
+int main()
+{
+	//std::vector<int> puzzleInput = {3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0}; // Passing
+	//std::vector<int> puzzleInput = { 3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0 }; // Passing
+	//std::vector<int> puzzleInput = { 3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0 }; //Passing
+	std::vector<int> puzzleInput = { 3,8,1001,8,10,8,105,1,0,0,21,42,67,88,101,114,195,276,357,438,99999,3,9,101,3,9,9,1002,9,4,9,1001,9,5,9,102,4,9,9,4,9,99,3,9,1001,9,3,9,1002,9,2,9,101,2,9,9,102,2,9,9,1001,9,5,9,4,9,99,3,9,102,4,9,9,1001,9,3,9,102,4,9,9,101,4,9,9,4,9,99,3,9,101,2,9,9,1002,9,3,9,4,9,99,3,9,101,4,9,9,1002,9,5,9,4,9,99,3,9,102,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,1,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,1,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,101,1,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,99,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,101,1,9,9,4,9,99,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,1,9,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,1,9,4,9,99,3,9,102,2,9,9,4,9,3,9,101,1,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,1,9,9,4,9,3,9,101,1,9,9,4,9,3,9,101,1,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,101,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,99,3,9,1001,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,101,2,9,9,4,9,3,9,101,2,9,9,4,9,99};
+
+	std::vector<int> orderedPhases;
+	std::set<int> puzzlePhases = { 0,1,2,3,4 };
+	int maxThrust{ 0 };
+    everyCombination(puzzleInput,orderedPhases, puzzlePhases, maxThrust);
+
+	std::cout << "Max Thrust: " << maxThrust << std::endl;
 }
