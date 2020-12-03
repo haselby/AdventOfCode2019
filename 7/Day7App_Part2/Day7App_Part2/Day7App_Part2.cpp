@@ -4,6 +4,14 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <concrt.h>
+#include <functional>
+
+int amp_a_output = 0;
+int amp_b_output = 0;
+int amp_c_output = 0;
+int amp_d_output = 0;
+int amp_e_output = 0;
 
 struct InstructionDecoder {
 	InstructionDecoder(int myInstruction) {
@@ -43,17 +51,30 @@ struct InstructionDecoder {
 struct IntcodeComputer {
 
 	std::vector<int> intcodeProgram;
-	int phase;
-	int input;
-	int input_no = 1;
+	int input{0};
+	int output{0};
+	bool waitingForInput{true};
+	std::function<void(int)> setDownstreamInput;
 
-	IntcodeComputer(std::vector<int>& puzzleInput, int phaseAmp, int inputAmp) {
+
+	IntcodeComputer(std::vector<int>& puzzleInput, int phaseAmp) {
 		intcodeProgram = puzzleInput;
-		phase = phaseAmp;
-		input = inputAmp;
+		setInput(phaseAmp);
 	};
 
-	int compute(long long instruction_pointer) {
+	// TODO: Figure out how to pass the setInput setter for downstream amp.
+	IntcodeComputer(std::vector<int>& puzzleInput, int phaseAmp, std::function<void(int)> setDownstream) {
+		intcodeProgram = puzzleInput;
+		setInput(phaseAmp);
+		setDownstreamInput = setDownstream;
+	};
+
+	void setInput(int i) {
+		input = i;
+		waitingForInput = false;
+	}
+
+	void compute(long long instruction_pointer) {
 
 		InstructionDecoder* decoder_ptr = new InstructionDecoder(intcodeProgram[instruction_pointer]);
 
@@ -65,7 +86,7 @@ struct IntcodeComputer {
 		int index_c{};
 		int progIn{};
 		int progOut{};
-		int outputCode{};
+		
 
 		if (decoder_ptr->opcode == 1) {
 			// add operation
@@ -92,21 +113,24 @@ struct IntcodeComputer {
 		}
 		else if (decoder_ptr->opcode == 3) {
 			// request for input operation
+			std::cout << "Opt Code 3 Executed" << std::endl;
 			index_a = intcodeProgram[instruction_pointer + 1];
-			//std::cout << "Request for Input" << std::endl;
-			//std::cin >> progIn;
-			progIn = (input_no == 1) ? phase : input;
-			++input_no;
-			intcodeProgram[index_a] = progIn;
+			while (waitingForInput) {
+				Concurrency::wait(10); // sleeps for 10 milliseconds
+			}
+			std::cout << "Input Set" << std::endl;
+			intcodeProgram[index_a] = input;
+			waitingForInput = true;
 			compute(instruction_pointer + 2);
 
 		}
 		else if (decoder_ptr->opcode == 4) {
 			// output operation
 			index_a = intcodeProgram[instruction_pointer + 1];
-			return (decoder_ptr->parameter1_isImmediate ? index_a : intcodeProgram[index_a]);
-			//No need to continue, since return above
-			//compute(instruction_pointer + 2);
+			output = (decoder_ptr->parameter1_isImmediate ? index_a : intcodeProgram[index_a]);
+			// TODO Get the line below working
+			//setDownstreamInput(output);
+			compute(instruction_pointer + 2);
 
 		}
 		else if (decoder_ptr->opcode == 5) {
@@ -160,11 +184,10 @@ struct IntcodeComputer {
 
 		}
 		else if (decoder_ptr->opcode == 99) {
-			// exit operation - SHOULD NEVER GET HERE in Day7App - 
+			// Halt intcode computer 
 			std::cout << "Opt Code 99 Executed" << std::endl;
-			std::cout << intcodeProgram[0] << std::endl;
-			std::cout << "TEST2: " << outputCode << std::endl;
-			return 42; // Should we ever get here?
+			std::cout << "Amp Output: " << output << std::endl;
+			return; 
 		}
 		else {
 			// invalid opcode handling
@@ -200,30 +223,37 @@ int testThruster(std::vector<int>& puzzleInput, std::vector<int>& orderedPhases)
 
 	std::cout << "Input of amp a: " << inputAmpA << std::endl;
 
+	//Initialize the Amps
+
+	// TODO figure out how to pass the setInput method of amp_b as a constructor argument for amp_a
 	//Amp A
-	IntcodeComputer* amp_a = new IntcodeComputer(puzzleInput, phaseAmpA, inputAmpA);
-	outputAmpA = amp_a->compute(0);
+	IntcodeComputer* amp_a = new IntcodeComputer(puzzleInput, phaseAmpA);
+	amp_a->compute(0);
 	std::cout << "Output of amp a: " << outputAmpA << std::endl;
 
 	//Amp B
-	IntcodeComputer* amp_b = new IntcodeComputer(puzzleInput, phaseAmpB, outputAmpA);
-	outputAmpB = amp_b->compute(0);
+	IntcodeComputer* amp_b = new IntcodeComputer(puzzleInput, phaseAmpB);
+	amp_b->compute(0);
 	std::cout << "Output of amp B: " << outputAmpB << std::endl;
 
 	//Amp C
-	IntcodeComputer* amp_c = new IntcodeComputer(puzzleInput, phaseAmpC, outputAmpB);
-	outputAmpC = amp_c->compute(0);
+	IntcodeComputer* amp_c = new IntcodeComputer(puzzleInput, phaseAmpC);
+	amp_c->compute(0);
 	std::cout << "Output of amp C: " << outputAmpC << std::endl;
 
 	//AMP D
-	IntcodeComputer* amp_d = new IntcodeComputer(puzzleInput, phaseAmpD, outputAmpC);
-	outputAmpD = amp_d->compute(0);
+	IntcodeComputer* amp_d = new IntcodeComputer(puzzleInput, phaseAmpD);
+	amp_d->compute(0);
 	std::cout << "Output of amp D: " << outputAmpD << std::endl;
 
 	//AMP E
-	IntcodeComputer* amp_e = new IntcodeComputer(puzzleInput, phaseAmpE, outputAmpD);
-	outputAmpE = amp_e->compute(0);
+	IntcodeComputer* amp_e = new IntcodeComputer(puzzleInput, phaseAmpE);
+	amp_e->compute(0);
 	std::cout << "Output of amp E: " << outputAmpE << std::endl;
+
+	//Provide Amp A with initial input
+
+	amp_a->setInput(0);
 
 	return outputAmpE;
 }
@@ -259,7 +289,16 @@ int main()
 	std::vector<int> orderedPhases;
 	std::set<int> puzzlePhases = { 0,1,2,3,4 };
 	int maxThrust{ 0 };
-	everyCombination(puzzleInput, orderedPhases, puzzlePhases, maxThrust);
+	
+	//TODO trying to get this test to pass
+	//TODO application compiles, but just sits as amp wait for input, that never comes.
+	//text single configuration of phases
+	std::vector<int> testPuzzleInput = { 3, 26, 1001, 26, -4, 26, 3, 27, 1002, 27, 2, 27, 1, 27, 26, 27, 4, 27, 1001, 28, -1, 28, 1005, 28, 6, 99, 0, 0, 5 };
+	std::vector<int> testOrderedPhases = { 9,8,7,6,5 };
+	testThruster(testPuzzleInput, testOrderedPhases);
+
+	//Disable line below temporarily
+	//everyCombination(puzzleInput, orderedPhases, puzzlePhases, maxThrust);
 
 	std::cout << "Max Thrust: " << maxThrust << std::endl;
 }
