@@ -7,11 +7,8 @@
 #include <concrt.h>
 #include <functional>
 
-int amp_a_output = 0;
-int amp_b_output = 0;
-int amp_c_output = 0;
-int amp_d_output = 0;
-int amp_e_output = 0;
+static bool upstreamDataAvailable[5] = { false, false, false, false, false };
+static int outputAmp[5] = { 0,0,0,0,0 };
 
 struct InstructionDecoder {
 	InstructionDecoder(int myInstruction) {
@@ -48,30 +45,23 @@ struct InstructionDecoder {
 	}
 };
 
-struct IntcodeComputer {
+class IntcodeComputer {
 
 	std::vector<int> intcodeProgram;
-	int input{0};
-	int output{0};
-	bool waitingForInput{true};
-	std::function<void(int)> setDownstreamInput;
+	int ampDesignator;
+	int upstreamAmpDesignator;
 
-
-	IntcodeComputer(std::vector<int>& puzzleInput, int phaseAmp) {
+public:
+	IntcodeComputer(std::vector<int>& puzzleInput, int phaseAmp, int ampDes, int upstreamAmpDes) {
 		intcodeProgram = puzzleInput;
-		setInput(phaseAmp);
-	};
-
-	// TODO: Figure out how to pass the setInput setter for downstream amp.
-	IntcodeComputer(std::vector<int>& puzzleInput, int phaseAmp, std::function<void(int)> setDownstream) {
-		intcodeProgram = puzzleInput;
-		setInput(phaseAmp);
-		setDownstreamInput = setDownstream;
+		int ampDesignator = ampDes;
+		int upstreamAmpDesignator = upstreamAmpDes;
 	};
 
 	void setInput(int i) {
-		input = i;
-		waitingForInput = false;
+		int tmp = outputAmp[upstreamAmpDesignator];
+		outputAmp[upstreamAmpDesignator] = i;
+		upstreamDataAvailable[upstreamAmpDesignator] = true;
 	}
 
 	void compute(long long instruction_pointer) {
@@ -115,19 +105,20 @@ struct IntcodeComputer {
 			// request for input operation
 			std::cout << "Opt Code 3 Executed" << std::endl;
 			index_a = intcodeProgram[instruction_pointer + 1];
-			while (waitingForInput) {
+			while (!(upstreamDataAvailable[upstreamAmpDesignator])) {
 				Concurrency::wait(10); // sleeps for 10 milliseconds
 			}
 			std::cout << "Input Set" << std::endl;
-			intcodeProgram[index_a] = input;
-			waitingForInput = true;
+			//Read input from output of upstream amp
+			intcodeProgram[index_a] = outputAmp[upstreamAmpDesignator];
+			upstreamDataAvailable[upstreamAmpDesignator] = false;
 			compute(instruction_pointer + 2);
 
 		}
 		else if (decoder_ptr->opcode == 4) {
 			// output operation
 			index_a = intcodeProgram[instruction_pointer + 1];
-			output = (decoder_ptr->parameter1_isImmediate ? index_a : intcodeProgram[index_a]);
+			outputAmp[ampDesignator] = (decoder_ptr->parameter1_isImmediate ? index_a : intcodeProgram[index_a]);
 			// TODO Get the line below working
 			//setDownstreamInput(output);
 			compute(instruction_pointer + 2);
@@ -186,7 +177,6 @@ struct IntcodeComputer {
 		else if (decoder_ptr->opcode == 99) {
 			// Halt intcode computer 
 			std::cout << "Opt Code 99 Executed" << std::endl;
-			std::cout << "Amp Output: " << output << std::endl;
 			return; 
 		}
 		else {
@@ -200,19 +190,12 @@ struct IntcodeComputer {
 };
 
 int testThruster(std::vector<int>& puzzleInput, std::vector<int>& orderedPhases) {
+
 	int phaseAmpA = orderedPhases[0];
 	int phaseAmpB = orderedPhases[1];
 	int phaseAmpC = orderedPhases[2];
 	int phaseAmpD = orderedPhases[3];
 	int phaseAmpE = orderedPhases[4];
-
-	int inputAmpA{ 0 };
-
-	int outputAmpA{};
-	int outputAmpB{};
-	int outputAmpC{};
-	int outputAmpD{};
-	int outputAmpE{};
 
 	std::cout << "Phase of amp a: " << phaseAmpA << std::endl;
 	std::cout << "Phase of amp b: " << phaseAmpB << std::endl;
@@ -220,42 +203,31 @@ int testThruster(std::vector<int>& puzzleInput, std::vector<int>& orderedPhases)
 	std::cout << "Phase of amp d: " << phaseAmpD << std::endl;
 	std::cout << "Phase of amp e: " << phaseAmpE << std::endl;
 
-
-	std::cout << "Input of amp a: " << inputAmpA << std::endl;
-
 	//Initialize the Amps
 
-	// TODO figure out how to pass the setInput method of amp_b as a constructor argument for amp_a
 	//Amp A
-	IntcodeComputer* amp_a = new IntcodeComputer(puzzleInput, phaseAmpA);
+	IntcodeComputer* amp_a = new IntcodeComputer(puzzleInput, phaseAmpA, 0, 4);
+	
+	//Remove after test
+	amp_a->setInput(phaseAmpA);
 	amp_a->compute(0);
-	std::cout << "Output of amp a: " << outputAmpA << std::endl;
-
-	//Amp B
-	IntcodeComputer* amp_b = new IntcodeComputer(puzzleInput, phaseAmpB);
-	amp_b->compute(0);
-	std::cout << "Output of amp B: " << outputAmpB << std::endl;
-
-	//Amp C
-	IntcodeComputer* amp_c = new IntcodeComputer(puzzleInput, phaseAmpC);
-	amp_c->compute(0);
-	std::cout << "Output of amp C: " << outputAmpC << std::endl;
-
-	//AMP D
-	IntcodeComputer* amp_d = new IntcodeComputer(puzzleInput, phaseAmpD);
-	amp_d->compute(0);
-	std::cout << "Output of amp D: " << outputAmpD << std::endl;
-
-	//AMP E
-	IntcodeComputer* amp_e = new IntcodeComputer(puzzleInput, phaseAmpE);
-	amp_e->compute(0);
-	std::cout << "Output of amp E: " << outputAmpE << std::endl;
-
-	//Provide Amp A with initial input
-
+	//I never get here. Need amp_a to run on its own thread.
 	amp_a->setInput(0);
 
-	return outputAmpE;
+	//Amp B
+	IntcodeComputer* amp_b = new IntcodeComputer(puzzleInput, phaseAmpB, 1, 0);
+
+	//Amp C
+	IntcodeComputer* amp_c = new IntcodeComputer(puzzleInput, phaseAmpC, 2, 1);
+
+	//AMP D
+	IntcodeComputer* amp_d = new IntcodeComputer(puzzleInput, phaseAmpD, 3, 2);
+
+	//AMP E
+	IntcodeComputer* amp_e = new IntcodeComputer(puzzleInput, phaseAmpE, 4, 3);
+	
+
+	return 4242;
 }
 
 void everyCombination(std::vector<int>& puzzleInput, std::vector<int> orderedPhases, std::set<int> availablePhases, int& maxThrust) {
@@ -281,6 +253,7 @@ void everyCombination(std::vector<int>& puzzleInput, std::vector<int> orderedPha
 		return;
 	}
 }
+
 
 int main()
 {
