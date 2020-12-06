@@ -5,13 +5,18 @@
 // using three different callables. 
 #include <iostream> 
 #include <thread> 
+#include <future>
 
 // A dummy function 
-void foo(int Z)
+long long calculate(long long Z)
 {
-    for (int i = 0; i < Z; i++) {
-        std::cout << "Thread using function pointer as callable: " << i << std::endl;
+    long long max = 0;
+    for (long long i = 0; i < Z; i++) {
+        if (i > max)
+            max = i;
     }
+    std::cout << "Max value: " << max << std::endl;
+    return max;
 }
 
 // A callable object 
@@ -24,37 +29,30 @@ public:
     }
 };
 
+void haselFunc() {
+    std::thread th1(calculate, 300'000'000);
+    th1.join();
+}
+
 int main()
 {
-    std::cout << "Threads 1 and 2 and 3 operating independently" << std::endl;
+    std::cout << "Launching Proto ..." << std::endl;
 
-    // This thread is launched by using  
-    // function pointer as callable 
-    std::thread th1(foo, 3000);
 
-    // This thread is launched by using 
-    // function object as callable 
-    std::thread th2(thread_obj(), 3000);
+    long long resultFinal;
 
-    // Define a Lambda Expression 
-    auto f = [](int x) {
-        for (int i = 0; i < x; i++)
-            std::cout << "Thread using lambda expression as callable"  << std::endl;
-    };
 
-    // This thread is launched by using  
-    // lamda expression as callable 
-    std::thread th3(f, 3000);
+    auto future1 = std::async(calculate, 9'000'000'000);
+    auto future2 = std::async(calculate, 6'000'000'000);
+    auto future3 = std::async(calculate, 3'000'000'000);
+    
+    long long result1 = future1.get();
+    long long result2 = future2.get();
+    long long result3 = future3.get();
 
-    // Wait for the threads to finish 
-    // Wait for thread t1 to finish 
-    th1.join();
+    resultFinal = result1 + result2 + result3;
 
-    // Wait for thread t2 to finish 
-    th2.join();
-
-    // Wait for thread t3 to finish 
-    th3.join();
+    std::cout << "Final countdown: " << resultFinal << std::endl;
 
     return 0;
 }
