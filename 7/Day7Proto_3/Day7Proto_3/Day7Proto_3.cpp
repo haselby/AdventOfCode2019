@@ -29,30 +29,32 @@ public:
     }
 };
 
-void haselFunc() {
-    std::thread th1(calculate, 300'000'000);
-    th1.join();
-}
-
-int main()
-{
-    std::cout << "Launching Proto ..." << std::endl;
-
-
+long long haselFunc() {
     long long resultFinal;
 
 
     auto future1 = std::async(calculate, 9'000'000'000);
     auto future2 = std::async(calculate, 6'000'000'000);
     auto future3 = std::async(calculate, 3'000'000'000);
-    
+
     long long result1 = future1.get();
     long long result2 = future2.get();
     long long result3 = future3.get();
 
     resultFinal = result1 + result2 + result3;
 
-    std::cout << "Final countdown: " << resultFinal << std::endl;
+    return resultFinal;
+}
+
+int main()
+{
+    std::cout << "Launching Proto ..." << std::endl;
+
+    long long answer;
+
+    answer = haselFunc();
+
+    std::cout << "Final countdown: " << answer << std::endl;
 
     return 0;
 }
