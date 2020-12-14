@@ -35,19 +35,24 @@ public:
 
         void powerOn(int inputIndex, int outputIndex) {
             
-            while (!freshOutput[inputIndex]) sleep_for(1000ns);
+            for (size_t i = 0; i < 1000; i++) {
+       
+                while (!freshOutput[inputIndex]) sleep_for(1000ns);
             
-            mutex_ampOutput[inputIndex].lock();
-            mutex_ampOutput[outputIndex].lock();
+                mutex_ampOutput[inputIndex].lock();
+                mutex_ampOutput[outputIndex].lock();
            
-            // Start Critical Region 
-            ampOutput[outputIndex] = ampOutput[inputIndex] + 42;
-            freshOutput[inputIndex] = false;
-            freshOutput[outputIndex] = true;
-            // End Critical Region
+                // Start Critical Region 
+                ampOutput[outputIndex] = ampOutput[inputIndex] + 42;
+                freshOutput[inputIndex] = false;
+                freshOutput[outputIndex] = true;
+                // End Critical Region
             
-            mutex_ampOutput[inputIndex].unlock();
-            mutex_ampOutput[outputIndex].unlock();
+                mutex_ampOutput[inputIndex].unlock();
+                mutex_ampOutput[outputIndex].unlock();
+
+            }
+            
 
 
     }
