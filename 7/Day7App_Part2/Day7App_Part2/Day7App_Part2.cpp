@@ -4,11 +4,15 @@
 #include <iostream>
 #include <vector>
 #include <set>
-#include <concrt.h>
-#include <functional>
+#include <concrt.h> //Windows Only
+#include<vector>
+#include<mutex>
 
-static bool upstreamDataAvailable[5] = { false, false, false, false, false };
-static int outputAmp[5] = { 0,0,0,0,0 };
+using namespace std::this_thread;     // sleep_for, sleep_until
+using namespace std::chrono_literals; // ns, us, ms, s, h, etc.
+
+//static bool upstreamDataAvailable[5] = { false, false, false, false, false };
+//static int outputAmp[5] = { 0,0,0,0,0 };
 
 struct InstructionDecoder {
 	InstructionDecoder(int myInstruction) {
@@ -45,26 +49,49 @@ struct InstructionDecoder {
 	}
 };
 
-class IntcodeComputer {
+class Amp {
 
-	std::vector<int> intcodeProgram;
-	int ampDesignator;
-	int upstreamAmpDesignator;
+	//NEW
+	int ampOutput[5];
+	std::mutex mutex_ampOutput[5];
+	bool freshOutput[5];
+	std::vector<int> ampPhase = {0,0,0,0,0};
+	std::mutex mutex_ampPhase;
+	bool phaseLoaded[5];
 
 public:
-	IntcodeComputer(std::vector<int>& puzzleInput, int phaseAmp, int ampDes, int upstreamAmpDes) {
-		intcodeProgram = puzzleInput;
-		int ampDesignator = ampDes;
-		int upstreamAmpDesignator = upstreamAmpDes;
+	Amp(std::vector<int>& orderedPhases) {
+		//TODO: (Before leaving: Read in phase setting for all 5 amps in constructor)
+
+		ampOutput[0] = 0; // ampA output
+		ampOutput[1] = 0; // ampB output
+		ampOutput[2] = 0; // ampC output
+		ampOutput[3] = 0; // ampD output
+		ampOutput[4] = 0; // ampE output
+
+		freshOutput[0] = false; // ampA output
+		freshOutput[1] = false; // ampB output
+		freshOutput[2] = false; // ampC output
+		freshOutput[3] = false; // ampD output
+		freshOutput[4] = true;  // ampE output
+
+		ampPhase[0] = orderedPhases[0]; //ampA phase
+		ampPhase[1] = orderedPhases[1]; //ampA phase
+		ampPhase[2] = orderedPhases[2]; //ampA phase
+		ampPhase[3] = orderedPhases[3]; //ampA phase
+		ampPhase[4] = orderedPhases[4]; //ampA phase
+
+
+		phaseLoaded[0] = false; // ampA phase read in
+		phaseLoaded[1] = false; // ampB phase read in
+		phaseLoaded[2] = false; // ampC phase read in
+		phaseLoaded[3] = false; // ampD phase read in
+		phaseLoaded[4] = false; // ampE phase read in
+
 	};
 
-	void setInput(int i) {
-		int tmp = outputAmp[upstreamAmpDesignator];
-		outputAmp[upstreamAmpDesignator] = i;
-		upstreamDataAvailable[upstreamAmpDesignator] = true;
-	}
 
-	void compute(long long instruction_pointer) {
+	void compute(std::vector<int> intcodeProgram, long long instruction_pointer, int inputIndex, int outputIndex) {
 
 		InstructionDecoder* decoder_ptr = new InstructionDecoder(intcodeProgram[instruction_pointer]);
 
@@ -87,7 +114,7 @@ public:
 			b = decoder_ptr->parameter2_isImmediate ? index_b : intcodeProgram[index_b];
 			c = a + b;
 			intcodeProgram[index_c] = c;
-			compute(instruction_pointer + 4);
+			compute(intcodeProgram, instruction_pointer + 4, inputIndex, outputIndex);
 		}
 		else if (decoder_ptr->opcode == 2) {
 			// multiple operation
@@ -98,30 +125,51 @@ public:
 			b = decoder_ptr->parameter2_isImmediate ? index_b : intcodeProgram[index_b];
 			c = a * b;
 			intcodeProgram[index_c] = c;
-			compute(instruction_pointer + 4);
+			compute(intcodeProgram, instruction_pointer + 4, inputIndex, outputIndex);
 
 		}
 		else if (decoder_ptr->opcode == 3) {
 			// request for input operation
-			std::cout << "Opt Code 3 Executed" << std::endl;
+			//std::cout << "Opt Code 3 Executed" << std::endl;
 			index_a = intcodeProgram[instruction_pointer + 1];
-			while (!(upstreamDataAvailable[upstreamAmpDesignator])) {
-				Concurrency::wait(10); // sleeps for 10 milliseconds
+
+			if (phaseLoaded[outputIndex]) {
+				// Read input from output of upstream amp
+				// Wait for fresh input
+				while (!freshOutput[inputIndex]) sleep_for(1ms);				
+				mutex_ampOutput[inputIndex].lock();
+				// Start Critical Region
+				std::cout << "Amp " << outputIndex << " - Reading Input..." << std::endl;
+				intcodeProgram[index_a] = ampOutput[inputIndex];
+				freshOutput[inputIndex] = false;
+				// End Critical Region
+				mutex_ampOutput[inputIndex].unlock();
+
+			}else {
+				//Setting Amp phase
+				std::cout << "Setting Amp "<< outputIndex << " to phase: " << ampPhase[outputIndex] << std::endl;
+				mutex_ampPhase.lock();
+				intcodeProgram[index_a] = ampPhase[outputIndex];
+				phaseLoaded[outputIndex] = true;
+				mutex_ampPhase.unlock();
 			}
-			std::cout << "Input Set" << std::endl;
-			//Read input from output of upstream amp
-			intcodeProgram[index_a] = outputAmp[upstreamAmpDesignator];
-			upstreamDataAvailable[upstreamAmpDesignator] = false;
-			compute(instruction_pointer + 2);
+			
+			compute(intcodeProgram, instruction_pointer + 2, inputIndex, outputIndex);
 
 		}
 		else if (decoder_ptr->opcode == 4) {
 			// output operation
 			index_a = intcodeProgram[instruction_pointer + 1];
-			outputAmp[ampDesignator] = (decoder_ptr->parameter1_isImmediate ? index_a : intcodeProgram[index_a]);
-			// TODO Get the line below working
-			//setDownstreamInput(output);
-			compute(instruction_pointer + 2);
+			
+			mutex_ampOutput[outputIndex].lock();
+			// Start Critical Region 
+			std::cout << "Amp " << outputIndex << " - Writing Output ..." << std::endl;
+			ampOutput[outputIndex] = (decoder_ptr->parameter1_isImmediate ? index_a : intcodeProgram[index_a]);
+			freshOutput[outputIndex] = true;
+			// End Critical Region
+			mutex_ampOutput[outputIndex].unlock();
+
+			compute(intcodeProgram, instruction_pointer + 2, inputIndex, outputIndex);
 
 		}
 		else if (decoder_ptr->opcode == 5) {
@@ -131,10 +179,10 @@ public:
 			a = decoder_ptr->parameter1_isImmediate ? index_a : intcodeProgram[index_a];
 			b = decoder_ptr->parameter2_isImmediate ? index_b : intcodeProgram[index_b];
 			if (!(a == 0)) {
-				compute(b);
+				compute(intcodeProgram, b, inputIndex, outputIndex);
 			}
 			else {
-				compute(instruction_pointer + 3);
+				compute(intcodeProgram, instruction_pointer + 3, inputIndex, outputIndex);
 			}
 
 		}
@@ -145,10 +193,10 @@ public:
 			a = decoder_ptr->parameter1_isImmediate ? index_a : intcodeProgram[index_a];
 			b = decoder_ptr->parameter2_isImmediate ? index_b : intcodeProgram[index_b];
 			if (a == 0) {
-				compute(b);
+				compute(intcodeProgram, b, inputIndex, outputIndex);
 			}
 			else {
-				compute(instruction_pointer + 3);
+				compute(intcodeProgram, instruction_pointer + 3, inputIndex, outputIndex);
 			}
 		}
 		else if (decoder_ptr->opcode == 7) {
@@ -160,7 +208,7 @@ public:
 			b = decoder_ptr->parameter2_isImmediate ? index_b : intcodeProgram[index_b];
 			c = (a < b) ? 1 : 0;
 			intcodeProgram[index_c] = c;
-			compute(instruction_pointer + 4);
+			compute(intcodeProgram, instruction_pointer + 4, inputIndex, outputIndex);
 		}
 		else if (decoder_ptr->opcode == 8) {
 			// equals operation
@@ -171,13 +219,15 @@ public:
 			b = decoder_ptr->parameter2_isImmediate ? index_b : intcodeProgram[index_b];
 			c = (a == b) ? 1 : 0;
 			intcodeProgram[index_c] = c;
-			compute(instruction_pointer + 4);
+			compute(intcodeProgram, instruction_pointer + 4, inputIndex, outputIndex);
 
 		}
 		else if (decoder_ptr->opcode == 99) {
 			// Halt intcode computer 
 			std::cout << "Opt Code 99 Executed" << std::endl;
-			return; 
+			
+			std::cout << "Amp " << outputIndex << " - Thrust: " << ampOutput[outputIndex] << std::endl;
+			return;
 		}
 		else {
 			// invalid opcode handling
@@ -191,41 +241,35 @@ public:
 
 int testThruster(std::vector<int>& puzzleInput, std::vector<int>& orderedPhases) {
 
-	int phaseAmpA = orderedPhases[0];
-	int phaseAmpB = orderedPhases[1];
-	int phaseAmpC = orderedPhases[2];
-	int phaseAmpD = orderedPhases[3];
-	int phaseAmpE = orderedPhases[4];
-
-	std::cout << "Phase of amp a: " << phaseAmpA << std::endl;
-	std::cout << "Phase of amp b: " << phaseAmpB << std::endl;
-	std::cout << "Phase of amp c: " << phaseAmpC << std::endl;
-	std::cout << "Phase of amp d: " << phaseAmpD << std::endl;
-	std::cout << "Phase of amp e: " << phaseAmpE << std::endl;
-
-	//Initialize the Amps
-
-	//Amp A
-	IntcodeComputer* amp_a = new IntcodeComputer(puzzleInput, phaseAmpA, 0, 4);
+	int testThrust{};
 	
-	//Remove after test
-	amp_a->setInput(phaseAmpA);
-	amp_a->compute(0);
-	//I never get here. Need amp_a to run on its own thread.
-	amp_a->setInput(0);
+	std::cout << "Phase of amp a: " << orderedPhases[0] << std::endl;
+	std::cout << "Phase of amp b: " << orderedPhases[1] << std::endl;
+	std::cout << "Phase of amp c: " << orderedPhases[2] << std::endl;
+	std::cout << "Phase of amp d: " << orderedPhases[3] << std::endl;
+	std::cout << "Phase of amp e: " << orderedPhases[4] << std::endl;
 
-	//Amp B
-	IntcodeComputer* amp_b = new IntcodeComputer(puzzleInput, phaseAmpB, 1, 0);
+	//NEW CODE
 
-	//Amp C
-	IntcodeComputer* amp_c = new IntcodeComputer(puzzleInput, phaseAmpC, 2, 1);
+	Amp ampObject(orderedPhases);
 
-	//AMP D
-	IntcodeComputer* amp_d = new IntcodeComputer(puzzleInput, phaseAmpD, 3, 2);
+	auto ampA = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 4, 0);
+	sleep_for(100ms);
+	auto ampB = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 0, 1);
+	sleep_for(100ms);
+	auto ampC = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 1, 2);
+	sleep_for(100ms);
+	auto ampD = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 2, 3);
+	sleep_for(100ms);
+	auto ampE = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 3, 4);
 
-	//AMP E
-	IntcodeComputer* amp_e = new IntcodeComputer(puzzleInput, phaseAmpE, 4, 3);
-	
+	sleep_for(1s);
+	ampA.join();
+	ampB.join();
+	ampC.join();
+	ampD.join();
+	ampE.join();
+
 
 	return 4242;
 }
