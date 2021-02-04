@@ -8,8 +8,35 @@
 #include<vector>
 #include<mutex>
 
+//Logging Framework
+// Added C:\devtools\boost_1_75_0\stage\lib folder to:
+// C++ Linker - Additional Library Directories
+// Logger Level Hierachy (ordered with most verbose at top)
+// trace
+// debug
+// info
+// warning
+// fatal
+#include <boost/log/trivial.hpp>
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/expressions.hpp>
+
+
+
 using namespace std::this_thread;     // sleep_for, sleep_until
 using namespace std::chrono_literals; // ns, us, ms, s, h, etc.
+
+namespace logging = boost::log;
+
+void init_logging()
+{
+	logging::add_file_log("sample.log");
+
+	logging::core::get()->set_filter
+	(
+		logging::trivial::severity >= logging::trivial::warning
+	);
+}
 
 //static bool upstreamDataAvailable[5] = { false, false, false, false, false };
 //static int outputAmp[5] = { 0,0,0,0,0 };
@@ -134,16 +161,16 @@ public:
 		}
 		else if (decoder_ptr->opcode == 3) {
 			// request for input operation
-			//std::cout << "Opt Code 3 Executed" << std::endl;
+			//BOOST_LOG_TRIVIAL(info) << "Opt Code 3 Executed" << std::endl;
 			index_a = intcodeProgram[instruction_pointer + 1];
 
 			if (phaseLoaded[outputIndex]) {
 				// Read input from output of upstream amp
 				// Wait for fresh input
-				while (!freshOutput[inputIndex]) sleep_for(1ms);
+				while (!freshOutput[inputIndex]) sleep_for(10ns);
 				mutex_ampOutput[inputIndex].lock();
 				// Start Critical Region
-				std::cout << "Amp " << outputIndex << " - Reading Input..." << std::endl;
+				BOOST_LOG_TRIVIAL(info) << "Amp " << outputIndex << " - Reading Input..." << std::endl;
 				intcodeProgram[index_a] = ampOutput[inputIndex];
 				freshOutput[inputIndex] = false;
 				// End Critical Region
@@ -152,7 +179,7 @@ public:
 			}
 			else {
 				//Setting Amp phase
-				std::cout << "Setting Amp " << outputIndex << " to phase: " << ampPhase[outputIndex] << std::endl;
+				BOOST_LOG_TRIVIAL(info) << "Setting Amp " << outputIndex << " to phase: " << ampPhase[outputIndex] << std::endl;
 				mutex_ampPhase.lock();
 				intcodeProgram[index_a] = ampPhase[outputIndex];
 				phaseLoaded[outputIndex] = true;
@@ -168,7 +195,7 @@ public:
 
 			mutex_ampOutput[outputIndex].lock();
 			// Start Critical Region 
-			std::cout << "Amp " << outputIndex << " - Writing Output ..." << std::endl;
+			BOOST_LOG_TRIVIAL(info) << "Amp " << outputIndex << " - Writing Output ..." << std::endl;
 			ampOutput[outputIndex] = (decoder_ptr->parameter1_isImmediate ? index_a : intcodeProgram[index_a]);
 			freshOutput[outputIndex] = true;
 			// End Critical Region
@@ -229,14 +256,14 @@ public:
 		}
 		else if (decoder_ptr->opcode == 99) {
 			// Halt intcode computer 
-			std::cout << "Opt Code 99 Executed" << std::endl;
+			BOOST_LOG_TRIVIAL(info) << "Opt Code 99 Executed" << std::endl;
 
-			std::cout << "Amp " << outputIndex << " - Thrust: " << ampOutput[outputIndex] << std::endl;
+			BOOST_LOG_TRIVIAL(info) << "Amp " << outputIndex << " - Thrust: " << ampOutput[outputIndex] << std::endl;
 			return;
 		}
 		else {
 			// invalid opcode handling
-			std::cout << "Intcode computer error, unexpected opcode: " << decoder_ptr->opcode << std::endl;
+			BOOST_LOG_TRIVIAL(info) << "Intcode computer error, unexpected opcode: " << decoder_ptr->opcode << std::endl;
 			std::terminate;
 		}
 
@@ -248,24 +275,24 @@ int testThruster(std::vector<int>& puzzleInput, std::vector<int>& orderedPhases)
 
 	int testThrust{};
 
-	std::cout << "Phase of amp a: " << orderedPhases[0] << std::endl;
-	std::cout << "Phase of amp b: " << orderedPhases[1] << std::endl;
-	std::cout << "Phase of amp c: " << orderedPhases[2] << std::endl;
-	std::cout << "Phase of amp d: " << orderedPhases[3] << std::endl;
-	std::cout << "Phase of amp e: " << orderedPhases[4] << std::endl;
+	BOOST_LOG_TRIVIAL(info) << "Phase of amp a: " << orderedPhases[0] << std::endl;
+	BOOST_LOG_TRIVIAL(info) << "Phase of amp b: " << orderedPhases[1] << std::endl;
+	BOOST_LOG_TRIVIAL(info) << "Phase of amp c: " << orderedPhases[2] << std::endl;
+	BOOST_LOG_TRIVIAL(info) << "Phase of amp d: " << orderedPhases[3] << std::endl;
+	BOOST_LOG_TRIVIAL(info) << "Phase of amp e: " << orderedPhases[4] << std::endl;
 
 	//NEW CODE
 
 	Amp ampObject(orderedPhases);
 
 	auto ampA = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 4, 0);
-	sleep_for(100ms);
+	sleep_for(10ns);
 	auto ampB = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 0, 1);
-	sleep_for(100ms);
+	sleep_for(10ns);
 	auto ampC = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 1, 2);
-	sleep_for(100ms);
+	sleep_for(10ns);
 	auto ampD = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 2, 3);
-	sleep_for(100ms);
+	sleep_for(10ns);
 	auto ampE = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 3, 4);
 
 	sleep_for(1s);
@@ -306,6 +333,8 @@ void everyCombination(std::vector<int>& puzzleInput, std::vector<int> orderedPha
 
 int main()
 {
+	init_logging();
+	
 	std::vector<int> puzzleInput = { 3,8,1001,8,10,8,105,1,0,0,21,42,67,88,101,114,195,276,357,438,99999,3,9,101,3,9,9,1002,9,4,9,1001,9,5,9,102,4,9,9,4,9,99,3,9,1001,9,3,9,1002,9,2,9,101,2,9,9,102,2,9,9,1001,9,5,9,4,9,99,3,9,102,4,9,9,1001,9,3,9,102,4,9,9,101,4,9,9,4,9,99,3,9,101,2,9,9,1002,9,3,9,4,9,99,3,9,101,4,9,9,1002,9,5,9,4,9,99,3,9,102,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,1,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,1,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,101,1,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,99,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,101,1,9,9,4,9,99,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,1,9,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,1,9,4,9,99,3,9,102,2,9,9,4,9,3,9,101,1,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,1,9,9,4,9,3,9,101,1,9,9,4,9,3,9,101,1,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,101,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,99,3,9,1001,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,101,2,9,9,4,9,3,9,101,2,9,9,4,9,99 };
 
 	std::vector<int> orderedPhases;
