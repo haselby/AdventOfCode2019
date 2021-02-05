@@ -7,6 +7,13 @@
 #include <concrt.h> //Windows Only
 #include<vector>
 #include<mutex>
+#include <boost/log/trivial.hpp> // Logging Framework
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/expressions.hpp>
+
+using namespace std::this_thread;     // sleep_for, sleep_until
+using namespace std::chrono_literals; // ns, us, ms, s, h, etc.
+
 
 //Logging Framework
 // Added C:\devtools\boost_1_75_0\stage\lib folder to:
@@ -17,29 +24,16 @@
 // info
 // warning
 // fatal
-#include <boost/log/trivial.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/expressions.hpp>
-
-
-
-using namespace std::this_thread;     // sleep_for, sleep_until
-using namespace std::chrono_literals; // ns, us, ms, s, h, etc.
-
-namespace logging = boost::log;
 
 void init_logging()
 {
-	logging::add_file_log("sample.log");
+	boost::log::add_file_log("sample.log");
 
-	logging::core::get()->set_filter
+	boost::log::core::get()->set_filter
 	(
-		logging::trivial::severity >= logging::trivial::warning
+		boost::log::trivial::severity >= boost::log::trivial::warning
 	);
 }
-
-//static bool upstreamDataAvailable[5] = { false, false, false, false, false };
-//static int outputAmp[5] = { 0,0,0,0,0 };
 
 struct InstructionDecoder {
 	InstructionDecoder(int myInstruction) {
@@ -78,7 +72,6 @@ struct InstructionDecoder {
 
 class Amp {
 
-	//NEW
 	int ampOutput[5];
 	std::mutex mutex_ampOutput[5];
 	bool freshOutput[5];
@@ -108,13 +101,11 @@ public:
 		ampPhase[3] = orderedPhases[3]; //ampA phase
 		ampPhase[4] = orderedPhases[4]; //ampA phase
 
-
 		phaseLoaded[0] = false; // ampA phase read in
 		phaseLoaded[1] = false; // ampB phase read in
 		phaseLoaded[2] = false; // ampC phase read in
 		phaseLoaded[3] = false; // ampD phase read in
 		phaseLoaded[4] = false; // ampE phase read in
-
 	};
 
 	int getOutput(int outputIndex) {
@@ -161,7 +152,7 @@ public:
 		}
 		else if (decoder_ptr->opcode == 3) {
 			// request for input operation
-			//BOOST_LOG_TRIVIAL(info) << "Opt Code 3 Executed" << std::endl;
+			BOOST_LOG_TRIVIAL(info) << "Opt Code 3 Executed" << std::endl;
 			index_a = intcodeProgram[instruction_pointer + 1];
 
 			if (phaseLoaded[outputIndex]) {
@@ -281,8 +272,6 @@ int testThruster(std::vector<int>& puzzleInput, std::vector<int>& orderedPhases)
 	BOOST_LOG_TRIVIAL(info) << "Phase of amp d: " << orderedPhases[3] << std::endl;
 	BOOST_LOG_TRIVIAL(info) << "Phase of amp e: " << orderedPhases[4] << std::endl;
 
-	//NEW CODE
-
 	Amp ampObject(orderedPhases);
 
 	auto ampA = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 4, 0);
@@ -293,15 +282,14 @@ int testThruster(std::vector<int>& puzzleInput, std::vector<int>& orderedPhases)
 	sleep_for(10ns);
 	auto ampD = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 2, 3);
 	sleep_for(10ns);
-	auto ampE = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 3, 4);
+	auto ampE = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 3, 4); 
+	sleep_for(10ns);
 
-	sleep_for(1s);
 	ampA.join();
 	ampB.join();
 	ampC.join();
 	ampD.join();
 	ampE.join();
-
 
 	return ampObject.getOutput(4);
 }
@@ -348,7 +336,6 @@ int main()
 	//std::vector<int> testOrderedPhases = { 9, 7, 8, 5, 6 };
 	//maxThrust = testThruster(testPuzzleInput, testOrderedPhases);
 
-	//Disable line below temporarily
 
 	everyCombination(puzzleInput, orderedPhases, puzzlePhases, maxThrust);
 
