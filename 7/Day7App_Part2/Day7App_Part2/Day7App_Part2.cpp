@@ -49,7 +49,7 @@ struct InstructionDecoder {
 	}
 };
 
-class Amp {
+class IntCodeComputer {
 
 	//NEW
 	int ampOutput[5];
@@ -60,7 +60,7 @@ class Amp {
 	bool phaseLoaded[5];
 
 public:
-	Amp(std::vector<int>& orderedPhases) {
+	IntCodeComputer(std::vector<int>& orderedPhases) {
 		//TODO: (Before leaving: Read in phase setting for all 5 amps in constructor)
 
 		ampOutput[0] = 0; // ampA output
@@ -255,17 +255,17 @@ int testThruster(std::vector<int>& puzzleInput, std::vector<int>& orderedPhases)
 
 	//NEW CODE
 
-	Amp ampObject(orderedPhases);
+	IntCodeComputer ampObject(orderedPhases);
 
-	auto ampA = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 4, 0);
+	auto ampA = std::thread(&IntCodeComputer::compute, &ampObject, puzzleInput, 0, 4, 0);
 	sleep_for(100ms);
-	auto ampB = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 0, 1);
+	auto ampB = std::thread(&IntCodeComputer::compute, &ampObject, puzzleInput, 0, 0, 1);
 	sleep_for(100ms);
-	auto ampC = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 1, 2);
+	auto ampC = std::thread(&IntCodeComputer::compute, &ampObject, puzzleInput, 0, 1, 2);
 	sleep_for(100ms);
-	auto ampD = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 2, 3);
+	auto ampD = std::thread(&IntCodeComputer::compute, &ampObject, puzzleInput, 0, 2, 3);
 	sleep_for(100ms);
-	auto ampE = std::thread(&Amp::compute, &ampObject, puzzleInput, 0, 3, 4);
+	auto ampE = std::thread(&IntCodeComputer::compute, &ampObject, puzzleInput, 0, 3, 4);
 
 	sleep_for(1s);
 	ampA.join();
