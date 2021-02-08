@@ -63,15 +63,15 @@ private:
 	
 	void setParameterMode() {
 		// TODO: Implicit conversion long long int to int in getDigit call. May need to address.
-		if (num_parameters <= 1) {
+		if (num_parameters >= 1) {
 			int x = getDigit(instruction, 3);
 			parameter_1_mode = EvaluateMode(x);
 		}
-		if (num_parameters <= 2) {
+		if (num_parameters >= 2) {
 			int y = getDigit(instruction, 4);
 			parameter_2_mode = EvaluateMode(y);
 		}
-		if (num_parameters <= 3) {
+		if (num_parameters >= 3) {
 			int z = getDigit(instruction, 5);
 			parameter_3_mode = EvaluateMode(z);
 		}
@@ -82,34 +82,67 @@ private:
 
 class IntcodeComputer {
 
-
 public:
-	IntcodeComputer(std::vector<long long int> intcodeProgram) : intcodeProgram{ intcodeProgram } {};
+//Public Variable Declarations
+
+
+// Constructor
+	IntcodeComputer(std::vector<long long int> intcodeProgram) : intcode_program{ intcodeProgram } {};
 
 	void run() {
 		while (true) {
-			 
+			Instruction instruction{ intcode_program[instruction_pointer] };
+
+			std::cerr << instruction.opcode << std::endl;
+			if (instruction.parameter_1_mode == Mode::immediate) std::cerr << "Immediate Mode" << std::endl;
+			//
+			if (instruction.opcode == 1) {
+				// add operation
+				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1 + relative_base] : intcode_program[instruction_pointer + 1];
+				p2_index = (instruction.parameter_2_mode == Mode::relative) ? intcode_program[instruction_pointer + 2 + relative_base] : intcode_program[instruction_pointer + 2];
+				p3_index = (instruction.parameter_3_mode == Mode::relative) ? intcode_program[instruction_pointer + 3 + relative_base] : intcode_program[instruction_pointer + 3];
+				p1 = (instruction.parameter_1_mode == Mode::immediate) ? p1_index : intcode_program[p1_index];
+				p2 = (instruction.parameter_2_mode == Mode::immediate) ? p2_index : intcode_program[p2_index];
+				p3 = p1 + p2;
+				intcode_program[p3_index] = p3;
+				
+				//Increment instruction pointer 
+				instruction_pointer += 4;
+			}
+			//
+			std::cerr << "p3: " << p3 << std::endl;
+			//
+			break;
 		}
 	}
 
 private:
 	//Private Variable Declaration
-	std::vector<long long int> intcodeProgram;
-	long long int instructionPointer{};
-	long long int instruction{};
-	long long int parameter1{};
-	long long int parameter2{};
-	long long int parameter3{};
+	std::vector<long long int> intcode_program;
+	int instruction_pointer{};
+	int relative_base{};
+	long long int p1{};
+	long long int p2{};
+	long long int p3{};
+	int p1_index{};
+	int p2_index{};
+	int p3_index{};
+
+
+	
+
+	
 };
 
 int main()
 {
-	std::vector<long long int> intcodeProgram = { 109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99 };
+	//std::vector<long long int> intcode_program = { 109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99 };
+	std::vector<long long int> intcode_program = { 11101, 5, 15, 0, 99, 42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	std::cout << "Day 9 App Started..." << std::endl;
 
-	IntcodeComputer intcodeComputer{ intcodeProgram };
-	//intcodeComputer.run();
+	IntcodeComputer intcodeComputer{ intcode_program };
+	intcodeComputer.run();
 
 
     system("pause");
