@@ -94,13 +94,13 @@ public:
 			Instruction instruction{ intcode_program[instruction_pointer] };
 
 			//Writes opcode to console
-			std::cerr << "opcode: " <<instruction.opcode << std::endl;
+			//std::cerr << "opcode: " <<instruction.opcode << std::endl;
 			
 			if (instruction.opcode == 1) {
 				// add operation
-				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1 + relative_base] : intcode_program[instruction_pointer + 1];
-				p2_index = (instruction.parameter_2_mode == Mode::relative) ? intcode_program[instruction_pointer + 2 + relative_base] : intcode_program[instruction_pointer + 2];
-				p3_index = (instruction.parameter_3_mode == Mode::relative) ? intcode_program[instruction_pointer + 3 + relative_base] : intcode_program[instruction_pointer + 3];
+				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1] + relative_base : intcode_program[instruction_pointer + 1];
+				p2_index = (instruction.parameter_2_mode == Mode::relative) ? intcode_program[instruction_pointer + 2] + relative_base : intcode_program[instruction_pointer + 2];
+				p3_index = (instruction.parameter_3_mode == Mode::relative) ? intcode_program[instruction_pointer + 3] + relative_base : intcode_program[instruction_pointer + 3];
 				p1 = (instruction.parameter_1_mode == Mode::immediate) ? p1_index : intcode_program[p1_index];
 				p2 = (instruction.parameter_2_mode == Mode::immediate) ? p2_index : intcode_program[p2_index];
 				p3 = p1 + p2;
@@ -112,9 +112,9 @@ public:
 			}
 			else if (instruction.opcode == 2) {
 				// multiply operation
-				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1 + relative_base] : intcode_program[instruction_pointer + 1];
-				p2_index = (instruction.parameter_2_mode == Mode::relative) ? intcode_program[instruction_pointer + 2 + relative_base] : intcode_program[instruction_pointer + 2];
-				p3_index = (instruction.parameter_3_mode == Mode::relative) ? intcode_program[instruction_pointer + 3 + relative_base] : intcode_program[instruction_pointer + 3];
+				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1] + relative_base : intcode_program[instruction_pointer + 1];
+				p2_index = (instruction.parameter_2_mode == Mode::relative) ? intcode_program[instruction_pointer + 2] + relative_base : intcode_program[instruction_pointer + 2];
+				p3_index = (instruction.parameter_3_mode == Mode::relative) ? intcode_program[instruction_pointer + 3] + relative_base : intcode_program[instruction_pointer + 3];
 				p1 = (instruction.parameter_1_mode == Mode::immediate) ? p1_index : intcode_program[p1_index];
 				p2 = (instruction.parameter_2_mode == Mode::immediate) ? p2_index : intcode_program[p2_index];
 				p3 = p1 * p2;
@@ -126,7 +126,7 @@ public:
 			}
 			else if (instruction.opcode == 3) {
 				// input operation
-				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1 + relative_base] : intcode_program[instruction_pointer + 1];
+				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1] + relative_base : intcode_program[instruction_pointer + 1];
 
 				// Todo: Currently only implemented to accept input from command line.				
 				p1 = getInt();
@@ -139,7 +139,7 @@ public:
 			}
 			else if (instruction.opcode == 4) {
 				// output operation
-				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1 + relative_base] : intcode_program[instruction_pointer + 1];
+				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1] + relative_base : intcode_program[instruction_pointer + 1];
 				p1 = (instruction.parameter_1_mode == Mode::immediate) ? p1_index : intcode_program[p1_index];
 				std::cout << p1 << std::endl;
 
@@ -148,8 +148,8 @@ public:
 			}
 			else if (instruction.opcode == 5) {
 				// jump-if-true operation operation
-				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1 + relative_base] : intcode_program[instruction_pointer + 1];
-				p2_index = (instruction.parameter_2_mode == Mode::relative) ? intcode_program[instruction_pointer + 2 + relative_base] : intcode_program[instruction_pointer + 2];
+				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1] + relative_base : intcode_program[instruction_pointer + 1];
+				p2_index = (instruction.parameter_2_mode == Mode::relative) ? intcode_program[instruction_pointer + 2] + relative_base : intcode_program[instruction_pointer + 2];
 				p1 = (instruction.parameter_1_mode == Mode::immediate) ? p1_index : intcode_program[p1_index];
 				p2 = (instruction.parameter_2_mode == Mode::immediate) ? p2_index : intcode_program[p2_index];
 				
@@ -159,8 +159,8 @@ public:
 			}
 			else if (instruction.opcode == 6) {
 				// jump-if-false operation operation
-				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1 + relative_base] : intcode_program[instruction_pointer + 1];
-				p2_index = (instruction.parameter_2_mode == Mode::relative) ? intcode_program[instruction_pointer + 2 + relative_base] : intcode_program[instruction_pointer + 2];
+				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1] + relative_base : intcode_program[instruction_pointer + 1];
+				p2_index = (instruction.parameter_2_mode == Mode::relative) ? intcode_program[instruction_pointer + 2] + relative_base : intcode_program[instruction_pointer + 2];
 				p1 = (instruction.parameter_1_mode == Mode::immediate) ? p1_index : intcode_program[p1_index];
 				p2 = (instruction.parameter_2_mode == Mode::immediate) ? p2_index : intcode_program[p2_index];
 
@@ -170,9 +170,9 @@ public:
 			}
 			else if (instruction.opcode == 7) {
 				// less than operation
-				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1 + relative_base] : intcode_program[instruction_pointer + 1];
-				p2_index = (instruction.parameter_2_mode == Mode::relative) ? intcode_program[instruction_pointer + 2 + relative_base] : intcode_program[instruction_pointer + 2];
-				p3_index = (instruction.parameter_3_mode == Mode::relative) ? intcode_program[instruction_pointer + 3 + relative_base] : intcode_program[instruction_pointer + 3];
+				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1] + relative_base : intcode_program[instruction_pointer + 1];
+				p2_index = (instruction.parameter_2_mode == Mode::relative) ? intcode_program[instruction_pointer + 2] + relative_base : intcode_program[instruction_pointer + 2];
+				p3_index = (instruction.parameter_3_mode == Mode::relative) ? intcode_program[instruction_pointer + 3] + relative_base : intcode_program[instruction_pointer + 3];
 				p1 = (instruction.parameter_1_mode == Mode::immediate) ? p1_index : intcode_program[p1_index];
 				p2 = (instruction.parameter_2_mode == Mode::immediate) ? p2_index : intcode_program[p2_index];
 				p3 = (p1 < p2) ? 1 : 0;
@@ -185,9 +185,9 @@ public:
 			}
 			else if (instruction.opcode == 8) {
 				// equal (boolean) operation
-				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1 + relative_base] : intcode_program[instruction_pointer + 1];
-				p2_index = (instruction.parameter_2_mode == Mode::relative) ? intcode_program[instruction_pointer + 2 + relative_base] : intcode_program[instruction_pointer + 2];
-				p3_index = (instruction.parameter_3_mode == Mode::relative) ? intcode_program[instruction_pointer + 3 + relative_base] : intcode_program[instruction_pointer + 3];
+				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1] + relative_base : intcode_program[instruction_pointer + 1];
+				p2_index = (instruction.parameter_2_mode == Mode::relative) ? intcode_program[instruction_pointer + 2] + relative_base : intcode_program[instruction_pointer + 2];
+				p3_index = (instruction.parameter_3_mode == Mode::relative) ? intcode_program[instruction_pointer + 3] + relative_base : intcode_program[instruction_pointer + 3];
 				p1 = (instruction.parameter_1_mode == Mode::immediate) ? p1_index : intcode_program[p1_index];
 				p2 = (instruction.parameter_2_mode == Mode::immediate) ? p2_index : intcode_program[p2_index];
 				p3 = (p1 == p2) ? 1 : 0;
@@ -200,9 +200,10 @@ public:
 			}
 			else if (instruction.opcode == 9) {
 				// adjusts the relative base operation
-				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1 + relative_base] : intcode_program[instruction_pointer + 1];
+				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1] + relative_base : intcode_program[instruction_pointer + 1];
 
-				relative_base += relative_base;
+				if (instruction.parameter_1_mode == Mode::immediate) relative_base += intcode_program[instruction_pointer + 1];
+				else relative_base += intcode_program[p1_index];
 
 				//Increment instruction pointer 
 				instruction_pointer += 2;
@@ -242,12 +243,18 @@ private:
 std::vector<long long int> loadTest(){
 	//Usage: Comment out one of the test incode_program below:
 
-	//std::vector<long long int> intcode_program = { 109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99 };
+	std::vector<long long int> intcode_program = { 109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99 };
 	//std::vector<long long int> intcode_program = { 3,9,8,9,10,9,4,9,99,-1,8 }; // intcode program - Using position mode, consider whether the input is equal to 8; output 1 (if it is) or 0 (if it is not).
 	//std::vector<long long int> intcode_program = { 3,9,7,9,10,9,4,9,99,-1,8 }; // intcode program - Using position mode, consider whether the input is less than 8; output 1 (if it is) or 0 (if it is not).
 	//std::vector<long long int> intcode_program = { 3,3,1108,-1,8,3,4,3,99 }; // intcode program - Using immediate mode, consider whether the input is equal to 8; output 1 (if it is) or 0 (if it is not).
 	//std::vector<long long int> intcode_program = { 3,3,1107,-1,8,3,4,3,99 }; // intcode program - Using immediate mode, consider whether the input is less than 8; output 1 (if it is) or 0 (if it is not).
-	std::vector<long long int> intcode_program = { 3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99 }; // intcode program - input instruction to ask for a single number. The program will then output 999 if the input value is below 8, output 1000 if the input value is equal to 8, or output 1001 if the input value is greater than 8.
+	//std::vector<long long int> intcode_program = { 3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99 }; // intcode program - input instruction to ask for a single number. The program will then output 999 if the input value is below 8, output 1000 if the input value is equal to 8, or output 1001 if the input value is greater than 8.
+	
+	//Add zeroed memory to the tail of intcode_program
+	for (int i = 0; i < 1000; i++) {
+		intcode_program.push_back(0);
+	}
+	
 	return intcode_program;
 }
 
