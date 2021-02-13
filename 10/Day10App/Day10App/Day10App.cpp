@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector> 
+#include <set>
 using namespace std;
 
 //  |-----------> x-dir
@@ -21,11 +22,16 @@ std::string LoadPuzzle() {
     //Input Puzzle as C++ Raw string literal
     //usage: prefix(optional) R"delimiter(raw_characters)delimiter"
     std::string _puzzle = R"(
-.#..#
-.....
-#####
-....#
-...##
+......#.#.
+#..#.#....
+..#######.
+.#.#.###..
+.#..#.....
+..#....#.#
+#..#....#.
+.##.#..###
+##...#..#.
+.#....####
 )";
 
     return _puzzle;
@@ -76,8 +82,50 @@ void PrintGrid(vector<vector<char>> grid) {
      return grid;
  }
 
+ int CalculateUniqueLines(vector<vector<char>> grid, int x_coord, int y_coord) {
+     std::set<float> unique_lines_of_site;
 
-int main()
+     for (int j = 0; j < grid.size(); j++)
+     {
+         for (int i = 0; i < grid[j].size(); i++)
+         {
+             if (grid[i][j] == '#') {
+                 if (!((i == x_coord) && (j == y_coord))) {
+                     //Calculate slope (rise over run)
+                     unique_lines_of_site.insert((1.0f*(j - y_coord)) / (1.0f * (i - x_coord)));
+                 }
+             }
+         }
+     }
+
+     return unique_lines_of_site.size();
+ }
+
+ void FindBestLocation(vector<vector<char>> grid) {
+     int line_of_sight_max{};
+     int line_of_sight_count{};
+     int x_pos_ideal{};
+     int y_pos_ideal{};
+
+     for (int j = 0; j < grid.size(); j++)
+     {
+         for (int i = 0; i < grid[j].size(); i++)
+         {
+             if (grid[i][j] == '#') {
+                 line_of_sight_count = CalculateUniqueLines(grid, i, j);
+                 if (line_of_sight_count > line_of_sight_max) {
+                     line_of_sight_max = line_of_sight_count;
+                     x_pos_ideal = i;
+                     y_pos_ideal = j;
+                 }
+             }
+         }
+     }
+     std::cout << "Ideal Position: (" << x_pos_ideal << "," << y_pos_ideal << ")" << std::endl;
+     std::cout << "Unique lines of sight: " << line_of_sight_max << std::endl;
+ }
+
+ int main()
 {
     std::cout << "Day 10 Proto: Starting ..." << std::endl;;
 
@@ -87,10 +135,13 @@ int main()
     
     PrintGrid(asteroid_grid);
 
-    int x = 2;
-    int y = 0;
+    std::cout << std::endl;
 
-    std::cerr << asteroid_grid[x][y] << std::endl;
+    FindBestLocation(asteroid_grid);
 
+    // TODO: Debugging -looks like there is issue using slope (around 0 , -1, inf, -inf)
+    std::cerr << "Debugging ...." << std::endl;;
+    std::cerr << CalculateUniqueLines(asteroid_grid, 5, 8) << std::endl;
+    
     system("pause");
 }
