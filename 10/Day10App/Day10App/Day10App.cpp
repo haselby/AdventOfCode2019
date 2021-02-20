@@ -4,6 +4,9 @@
 #include <iostream>
 #include <vector> 
 #include <set>
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 using namespace std;
 
 //  |-----------> x-dir
@@ -22,16 +25,39 @@ std::string LoadPuzzle() {
     //Input Puzzle as C++ Raw string literal
     //usage: prefix(optional) R"delimiter(raw_characters)delimiter"
     std::string _puzzle = R"(
-......#.#.
-#..#.#....
-..#######.
-.#.#.###..
-.#..#.....
-..#....#.#
-#..#....#.
-.##.#..###
-##...#..#.
-.#....####
+.#..#..##.#...###.#............#.
+.....#..........##..#..#####.#..#
+#....#...#..#.......#...........#
+.#....#....#....#.#...#.#.#.#....
+..#..#.....#.......###.#.#.##....
+...#.##.###..#....#........#..#.#
+..#.##..#.#.#...##..........#...#
+..#..#.......................#..#
+...#..#.#...##.#...#.#..#.#......
+......#......#.....#.............
+.###..#.#..#...#..#.#.......##..#
+.#...#.................###......#
+#.#.......#..####.#..##.###.....#
+.#.#..#.#...##.#.#..#..##.#.#.#..
+##...#....#...#....##....#.#....#
+......#..#......#.#.....##..#.#..
+##.###.....#.#.###.#..#..#..###..
+#...........#.#..#..#..#....#....
+..........#.#.#..#.###...#.....#.
+...#.###........##..#..##........
+.###.....#.#.###...##.........#..
+#.#...##.....#.#.........#..#.###
+..##..##........#........#......#
+..####......#...#..........#.#...
+......##...##.#........#...##.##.
+.#..###...#.......#........#....#
+...##...#..#...#..#..#.#.#...#...
+....#......#.#............##.....
+#......####...#.....#...#......#.
+...#............#...#..#.#.#..#.#
+.#...#....###.####....#.#........
+#.#...##...#.##...#....#.#..##.#.
+.#....#.###..#..##.#.##...#.#..##
 )";
 
     return _puzzle;
@@ -82,6 +108,17 @@ void PrintGrid(vector<vector<char>> grid) {
      return grid;
  }
 
+ float CalculateHeading(int x_in, int y_in) {
+     float x( x_in ); // Narrowing conversion
+     float y( y_in ); // Narrowing conversion
+     if ((x > 0) && (y >= 0)) return atan(y / x);
+     if ((x == 0) && (y > 0)) return M_PI / 2;
+     if ((x < 0) && (y >= 0)) return M_PI - atan(y/abs(x));
+     if ((x <= 0) && (y < 0)) return (3.0f / 2.0f) * M_PI - atan(abs(x) / abs(y));
+     if ((x > 0) && (y < 0)) return (3.0f / 2.0f) * M_PI + atan(x / abs(y));
+     if ((x == 0) && (y == 0)) return 0;
+ }
+ 
  int CalculateUniqueLines(vector<vector<char>> grid, int x_coord, int y_coord) {
      std::set<float> unique_lines_of_site;
 
@@ -92,12 +129,12 @@ void PrintGrid(vector<vector<char>> grid) {
              if (grid[i][j] == '#') {
                  if (!((i == x_coord) && (j == y_coord))) {
                      //Calculate slope (rise over run)
-                     unique_lines_of_site.insert((1.0f*(j - y_coord)) / (1.0f * (i - x_coord)));
+                     unique_lines_of_site.insert(CalculateHeading((i - x_coord),(j - y_coord)));
                  }
              }
          }
      }
-
+     //std::cerr << "Hello 42" << std::endl;
      return unique_lines_of_site.size();
  }
 
@@ -138,10 +175,6 @@ void PrintGrid(vector<vector<char>> grid) {
     std::cout << std::endl;
 
     FindBestLocation(asteroid_grid);
-
-    // TODO: Debugging -looks like there is issue using slope (around 0 , -1, inf, -inf)
-    std::cerr << "Debugging ...." << std::endl;;
-    std::cerr << CalculateUniqueLines(asteroid_grid, 5, 8) << std::endl;
     
     system("pause");
 }
