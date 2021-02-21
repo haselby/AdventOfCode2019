@@ -171,7 +171,31 @@ std::tuple<int, int> FindBestLocation(vector<vector<char>> grid) {
     return { x_pos_ideal , y_pos_ideal };
 }
 
-int AcquireTargets(vector<vector<char>> grid, int x_coord, int y_coord) {
+
+std::tuple<int, int> FireOnTargets(vector<Asteroid> asteroidField) {
+    int target_x{};
+    int target_y{};
+    float min_distance{};
+    float current_angle = (3.0f / 2.0f) * M_PI; //Pointing high noon.
+    //Find asteroid at that angle
+    //Order found asteroids by distance
+    //destroy closest asteroid, by removing it from vector;
+
+    for (Asteroid my_asteroid : asteroidField) {
+        if (my_asteroid.angle == current_angle) {
+            if ((min_distance == 0) || (my_asteroid.distance < min_distance)) {
+                target_x = my_asteroid.loc_x;
+                target_y = my_asteroid.loc_y;
+            }
+        }
+    }
+
+    std::cerr << "Asteroid Targetted: " << target_x << "," << target_y << std::endl;
+
+    return { 42,42 }; //TODO return 200th destroyed asteroid
+}
+
+void AcquireTargets(vector<vector<char>> grid, int x_coord, int y_coord) {
     vector<Asteroid> asteroidField;
 
     for (int j = 0; j < grid.size(); j++)
@@ -188,7 +212,13 @@ int AcquireTargets(vector<vector<char>> grid, int x_coord, int y_coord) {
             }
         }
     }
-    return asteroidField.size();
+    std::cout << "NumberOfTargets: " << asteroidField.size() << std::endl;
+
+    auto [x, y] = FireOnTargets(asteroidField);
+
+    std::cout << "Location of Two hundredth asteroid destroyed: " << x << "," << y << std::endl;
+
+    return;
 }
 
 int main()
@@ -206,9 +236,7 @@ int main()
     //Returns optimal location for asteroid base
     auto [base_x, base_y] = FindBestLocation(asteroid_grid);
 
-    int no_targets = AcquireTargets(asteroid_grid, base_x, base_y);
-
-    std::cout << "NumberOfTargets: " << no_targets <<std::endl;
+    AcquireTargets(asteroid_grid, base_x, base_y);
 
     system("pause");
 }
