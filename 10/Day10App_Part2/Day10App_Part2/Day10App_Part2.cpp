@@ -172,35 +172,72 @@ std::tuple<int, int> FindBestLocation(vector<vector<char>> grid) {
 }
 
 
+float nextDirection(vector<Asteroid> asteroidField, float lastDirection) {
+    float min_angle_delta{2.0f*M_PI};
+    float next_angle{};
+    bool found_viable_angle{ false };
+    
+    do {
+        for (Asteroid asteroid : asteroidField) {
+            if (asteroid.angle > lastDirection) {
+                float angle_delta = asteroid.angle - lastDirection;
+                if (angle_delta < min_angle_delta) {
+                    next_angle = asteroid.angle;
+                    min_angle_delta = angle_delta;
+                    found_viable_angle = true;
+                }
+            }
+        }
+        if (found_viable_angle == false) {
+            lastDirection = -0.1f; // Angle wraps around; Set to neg value so it would catch angle of zero.
+        }
+    } while (found_viable_angle == false);
+    //printf("Next Angle: %4.6f \n", next_angle);
+    return next_angle;
+}
+
 std::tuple<int, int> FireOnTargets(vector<Asteroid> asteroidField) {
     int target_x{};
     int target_y{};
     float min_distance{};
-    vector<Asteroid>::iterator it;
-    it = asteroidField.begin();
-    vector<Asteroid>::iterator asteroid_destroy{};
-
-    float current_angle = (3.0f / 2.0f) * M_PI; //Pointing high noon.
-    //TODO:Find asteroid at that angle
-    //TODO:Order found asteroids by distance
-    //TODO:destroy closest asteroid, by removing it from vector;
-
-    for (auto asteroid_target = asteroidField.begin(); asteroid_target != asteroidField.end(); ++asteroid_target) {
-        if (asteroid_target->angle == current_angle) {
-            if ((min_distance == 0) || (asteroid_target->distance < min_distance)) {
-                target_x = asteroid_target->loc_x;
-                target_y = asteroid_target->loc_y;
-                min_distance = asteroid_target->distance;
-                asteroid_destroy = asteroid_target;
+    vector<Asteroid>::iterator asteroid_to_destroy{};
+    int asteroids_destroyed{};
+    
+    //Starting angle - Pointing Up (high noon)
+    float current_angle = (3.0f / 2.0f) * M_PI;
+    
+    //Finds closest asteroid at a given angle
+    do {
+        for (auto asteroid_target = asteroidField.begin(); asteroid_target != asteroidField.end(); ++asteroid_target) {
+            if (asteroid_target->angle == current_angle) {
+                if ((min_distance == 0) || (asteroid_target->distance < min_distance)) {
+                    target_x = asteroid_target->loc_x;
+                    target_y = asteroid_target->loc_y;
+                    min_distance = asteroid_target->distance;
+                    std::cerr << "angle: " << asteroid_target->angle << ", distance: " << asteroid_target->distance << std::endl;
+                    asteroid_to_destroy = asteroid_target;
+                }
             }
         }
-       
-    }
-    asteroidField.erase(asteroid_destroy);
+        // Destroys asteroid, by removing it from vector;
+        asteroidField.erase(asteroid_to_destroy);
+        asteroids_destroyed++;
+        std::cerr << "Asteroid Destroyed: " << target_x << "," << target_y << std::endl;
 
-    std::cerr << "Asteroid Targetted: " << target_x << "," << target_y << std::endl;
+        //reset values for next iteration
+        if (asteroidField.size() > 0) {
+            current_angle = nextDirection(asteroidField, current_angle);
+            min_distance = 0;
+        }
+        else {
+            std::cout << "All Asteroids Destroyed..." << std::endl;
+            break;
+        }
+    } 
+    while (asteroids_destroyed < 200);
 
-    return { 42,42 }; //TODO return 200th destroyed asteroid
+    //Returns location of last asteroid destroyed
+    return { target_x, target_y }; 
 }
 
 void AcquireTargets(vector<vector<char>> grid, int x_coord, int y_coord) {
@@ -213,7 +250,7 @@ void AcquireTargets(vector<vector<char>> grid, int x_coord, int y_coord) {
             if (grid[i][j] == '#') {
                 if (!((i == x_coord) && (j == y_coord))) {
                     float angle = CalculateHeading((i - x_coord), (j - y_coord));
-                    float distance = sqrt(static_cast<float>((x_coord - i) ^ 2 + (y_coord - j) ^ 2));
+                    float distance = sqrt(static_cast<float>(pow((i - x_coord), 2) + pow((j - y_coord) , 2)));
                     Asteroid asteroid{ i, j, angle, distance };
                     asteroidField.push_back(asteroid);
                 }
@@ -224,7 +261,7 @@ void AcquireTargets(vector<vector<char>> grid, int x_coord, int y_coord) {
 
     auto [x, y] = FireOnTargets(asteroidField);
 
-    std::cout << "Location of Two hundredth asteroid destroyed: " << x << "," << y << std::endl;
+    std::cout << "Location of two hundredth asteroid destroyed: " << x << "," << y << std::endl;
 
     return;
 }
