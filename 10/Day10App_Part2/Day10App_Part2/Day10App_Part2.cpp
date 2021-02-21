@@ -176,19 +176,27 @@ std::tuple<int, int> FireOnTargets(vector<Asteroid> asteroidField) {
     int target_x{};
     int target_y{};
     float min_distance{};
-    float current_angle = (3.0f / 2.0f) * M_PI; //Pointing high noon.
-    //Find asteroid at that angle
-    //Order found asteroids by distance
-    //destroy closest asteroid, by removing it from vector;
+    vector<Asteroid>::iterator it;
+    it = asteroidField.begin();
+    vector<Asteroid>::iterator asteroid_destroy{};
 
-    for (Asteroid my_asteroid : asteroidField) {
-        if (my_asteroid.angle == current_angle) {
-            if ((min_distance == 0) || (my_asteroid.distance < min_distance)) {
-                target_x = my_asteroid.loc_x;
-                target_y = my_asteroid.loc_y;
+    float current_angle = (3.0f / 2.0f) * M_PI; //Pointing high noon.
+    //TODO:Find asteroid at that angle
+    //TODO:Order found asteroids by distance
+    //TODO:destroy closest asteroid, by removing it from vector;
+
+    for (auto asteroid_target = asteroidField.begin(); asteroid_target != asteroidField.end(); ++asteroid_target) {
+        if (asteroid_target->angle == current_angle) {
+            if ((min_distance == 0) || (asteroid_target->distance < min_distance)) {
+                target_x = asteroid_target->loc_x;
+                target_y = asteroid_target->loc_y;
+                min_distance = asteroid_target->distance;
+                asteroid_destroy = asteroid_target;
             }
         }
+       
     }
+    asteroidField.erase(asteroid_destroy);
 
     std::cerr << "Asteroid Targetted: " << target_x << "," << target_y << std::endl;
 
