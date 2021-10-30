@@ -1,0 +1,46 @@
+You'll need to build a new emergency hull painting robot. 
+The robot needs to be able to move around on the grid of square panels on the side of your ship,
+detect the color of its current panel, and paint its current panel black or white. 
+(All of the panels are currently black.)
+
+
+white panel = 0  (.)
+black panel = 1  (#)
+
+turn 90 degrees left (ccw) = 0
+turn 90 degrees right (cw) = 1
+
+Input Instructions --> access camera --> output color panel, direction the robot should turn
+
+
+
+After the robot turns, it should always move forward exactly one panel. 
+
+The robot starts facing up.
+
+The robot will continue running for a while like this and halt when it is finished drawing. 
+Do not restart the Intcode computer inside the robot during this process.
+
+Start Intcode computer initializing it with puzzle input
+It will paint first, then move (So when it haults, it should not paint (again?) the panel it is currently over
+It will run for a while asking for input, for which you must provide color of the panel it is currently over
+the program will eventually hault
+
+After which you will need to provide the number of panels that were painted at least once.
+Note a panel could be painted white mulitple times, but only counted once.
+Also a panel could be painted white, then black, then white again
+
+Robot has both white and black paint.
+
+inital input will be 0 at the start of the intcode program since the space craft
+
+So basically you need to collect the output pairs from the computer, then process them to elimated panels
+that were already counted once.
+
+Also you need to resurrect your intcode computer from day 9 puzzle.
+
+The initial color of any panel on your ship is encoded in your puzzle input. (Rather than initially assuming the whole ship is white or is black)
+
+
+
+
