@@ -3,9 +3,10 @@ The robot needs to be able to move around on the grid of square panels on the si
 detect the color of its current panel, and paint its current panel black or white. 
 (All of the panels are currently black.)
 
+Initially all panels on your space craft are black.
 
-white panel = 0  (.)
-black panel = 1  (#)
+black panel = 0  (.)
+white panel = 1  (#)
 
 turn 90 degrees left (ccw) = 0
 turn 90 degrees right (cw) = 1
@@ -32,14 +33,16 @@ Also a panel could be painted white, then black, then white again
 
 Robot has both white and black paint.
 
-inital input will be 0 at the start of the intcode program since the space craft
+inital input will be 0 at the start of the intcode program since the space craft is initially all black
 
 So basically you need to collect the output pairs from the computer, then process them to elimated panels
 that were already counted once.
 
 Also you need to resurrect your intcode computer from day 9 puzzle.
 
-The initial color of any panel on your ship is encoded in your puzzle input. (Rather than initially assuming the whole ship is white or is black)
+Currently the intcode computer reads input from console (cin) and outputs input to console (cout). 
+You will need to write code that can provided input when requested and accept output when given.
+
 
 
 
