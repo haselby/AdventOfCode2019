@@ -4,9 +4,12 @@
 #include <set>
 #include "Mode.h"
 #include "Instruction.h"
+#include "PanelGrid.h"
 
 
 class IntcodeComputer {
+private:
+	PanelGrid shipPanelGrid{ 100,100,0 };
 
 public:
 	//Public Variable Declarations
@@ -67,7 +70,11 @@ public:
 				// output operation
 				p1_index = (instruction.parameter_1_mode == Mode::relative) ? intcode_program[instruction_pointer + 1] + relative_base : intcode_program[instruction_pointer + 1];
 				p1 = (instruction.parameter_1_mode == Mode::immediate) ? p1_index : intcode_program[p1_index];
-				std::cout << p1 << std::endl;
+				
+				//Output operation
+				//std::cout << p1 << std::endl;
+				shipPanelGrid.readCommand(p1);
+
 
 				//Increment instruction pointer 
 				instruction_pointer += 2;
@@ -159,10 +166,11 @@ private:
 
 	int getInt() {
 		// TODO: This is not guarded. User can enter any input.
-		int progIn{};
-		std::cout << "Request for Input: " << std::endl;
-		std::cin >> progIn;
-		return progIn;
+		//int progIn{};
+		//std::cout << "Request for Input: " << std::endl;
+		//std::cin >> progIn;
+		//return progIn;
+		return shipPanelGrid.getColor();
 	}
 };
 

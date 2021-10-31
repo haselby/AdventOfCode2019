@@ -1,5 +1,7 @@
 #pragma once
 #include <vector>
+#include <iostream>
+#include <set>
 using namespace std;
 
 // y
@@ -17,8 +19,15 @@ private:
     vector<vector<int>> matrix;
     enum class Direction { left, up, right, down };
     Direction robot_direction{ Direction::up };
+    enum class CommandMode { paint, move };
+    CommandMode robotCommandMode{ CommandMode::paint };
+    
+
 
 public:
+
+ // TODO:  Create Set to capture X,Y coordinates of panels that were painted (Use set to prevent counting the same panel twice)
+
     PanelGrid(int x_max, int y_max, int default_color) {
 
         // Set robot location to approximate center of matrix
@@ -45,12 +54,14 @@ public:
         // print the two-dimensional vector
     };
 
+
     int getColor() {
         return matrix[x_robot][y_robot];
     }
 
     void paintColor(int color) {
         matrix[x_robot][y_robot] = color;
+        cout << "painted: " << x_robot << "," << y_robot << ": " << color << endl;
     }
 
     void changeDirection(int rotation){
@@ -92,6 +103,21 @@ public:
         }
 
     }
+
+    void readCommand(int input) {
+        if (robotCommandMode == CommandMode::paint) {
+            paintColor(input);
+            robotCommandMode = CommandMode::move;
+        }
+        else if(robotCommandMode == CommandMode::move) {
+            changeDirection(input);
+            takeStep();
+            robotCommandMode = CommandMode::paint;
+        }
+
+    }
+
+    
 
 };
 

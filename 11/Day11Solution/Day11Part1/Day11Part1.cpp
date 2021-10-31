@@ -7,6 +7,7 @@
 #include <set>
 #include "Instruction.h"
 #include "IntcodeComputer.h"
+#include "PanelGrid.h"
 
 // Function Prototypes
 std::vector<long long int> loadTest();
