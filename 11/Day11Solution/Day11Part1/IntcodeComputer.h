@@ -1,10 +1,11 @@
 #pragma once
 #include <iostream>
 #include <vector>
-#include <set>
 #include "Mode.h"
 #include "Instruction.h"
 #include "PanelGrid.h"
+
+using namespace std;
 
 
 class IntcodeComputer {
@@ -143,6 +144,7 @@ public:
 			}
 			else if (instruction.opcode == 99) {
 				// Halt intcode computer 
+				cout << "Painted Panels Count: " << shipPanelGrid.countPaintedPanels() << endl;
 				break;
 			}
 			else {

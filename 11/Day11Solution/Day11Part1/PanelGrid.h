@@ -26,7 +26,9 @@ private:
 
 public:
 
- // TODO:  Create Set to capture X,Y coordinates of panels that were painted (Use set to prevent counting the same panel twice)
+ // Create Set to capture X,Y coordinates of panels that were painted (Use set to prevent counting the same panel twice)
+    set<pair<int,int>> paintedPanels;
+
 
     PanelGrid(int x_max, int y_max, int default_color) {
 
@@ -62,6 +64,7 @@ public:
     void paintColor(int color) {
         matrix[x_robot][y_robot] = color;
         cout << "painted: " << x_robot << "," << y_robot << ": " << color << endl;
+        paintedPanels.insert(make_pair(x_robot, y_robot));
     }
 
     void changeDirection(int rotation){
@@ -115,6 +118,10 @@ public:
             robotCommandMode = CommandMode::paint;
         }
 
+    }
+
+    int countPaintedPanels() {
+        return paintedPanels.size();
     }
 
     

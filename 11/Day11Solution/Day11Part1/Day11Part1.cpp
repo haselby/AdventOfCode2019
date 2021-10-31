@@ -4,7 +4,6 @@
 
 #include <iostream>
 #include <vector>
-#include <set>
 #include "Instruction.h"
 #include "IntcodeComputer.h"
 #include "PanelGrid.h"
