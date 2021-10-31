@@ -21,6 +21,9 @@ private:
     Direction robot_direction{ Direction::up };
     enum class CommandMode { paint, move };
     CommandMode robotCommandMode{ CommandMode::paint };
+    bool OverStartingPanel{ true };
+    int loc_x_max{};
+    int loc_y_max{};
     
 
 
@@ -32,20 +35,23 @@ public:
 
     PanelGrid(int x_max, int y_max, int default_color) {
 
+        loc_x_max = x_max;
+        loc_y_max = y_max;
+
         // Set robot location to approximate center of matrix
-        x_robot = x_max / 2;
-        y_robot = y_max / 2;
+        x_robot = loc_x_max / 2;
+        y_robot = loc_y_max / 2;
 
 
 
         // instantiate vector object of type std::vector<int> and
         // use push_back() function to resize it
 
-        for (int i = 0; i < y_max; i++)
+        for (int i = 0; i < loc_y_max; i++)
         {
             // construct a vector of ints with the given default value
             std::vector<int> v;
-            for (int j = 0; j < x_max; j++) {
+            for (int j = 0; j < loc_x_max; j++) {
                 v.push_back(default_color);
             }
 
@@ -53,12 +59,18 @@ public:
             matrix.push_back(v);
         }
 
-        // print the two-dimensional vector
+
     };
 
 
     int getColor() {
-        return matrix[x_robot][y_robot];
+        if (OverStartingPanel) {
+            return 1;
+            OverStartingPanel = false;
+        }
+        else {
+            return matrix[x_robot][y_robot];
+        }
     }
 
     void paintColor(int color) {
@@ -122,6 +134,17 @@ public:
 
     int countPaintedPanels() {
         return paintedPanels.size();
+    }
+
+    //TODO: Inverted. Will need to fix
+    void printPanels() {
+        for (int j = loc_y_max-1; j >= 0; j--) {
+            for (int i = 0; i < loc_x_max; i++) {
+                cout << matrix[i][j];
+            }
+            cout << endl;
+        }
+
     }
 
     

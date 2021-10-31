@@ -145,6 +145,8 @@ public:
 			else if (instruction.opcode == 99) {
 				// Halt intcode computer 
 				cout << "Painted Panels Count: " << shipPanelGrid.countPaintedPanels() << endl;
+				cout << endl;
+				shipPanelGrid.printPanels();
 				break;
 			}
 			else {
